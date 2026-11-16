@@ -81,3 +81,36 @@ def rank(query: str, passages: list[Passage]) -> list[Passage]:
 
 def retrieve(query: str, passages: list[Passage], k: int = TOP_K) -> list[Passage]:
     return rank(query, passages)[:k]
+
+
+def split_sentences(text: str) -> list[str]:
+    """Split at 。 (kept at the end of the sentence); a trailing remainder is its own sentence."""
+    return [p for p in re.split(r"(?<=。)", text) if p.strip()]
+
+
+_QUOTE_ROLE = {"LOWER_COURT": SegmentRole.LOWER_COURT, "PARTY": SegmentRole.PARTY_CLAIM}
+
+
+def apply_quotes(passages: list[Passage], quoted: dict[tuple[int, int], str]) -> list[Passage]:
+    """SPEC_V2 C2: re-split 本院 passages so quoted sentences get the role of who they quote.
+
+    `quoted` maps (passage seq, sentence index) -> LOWER_COURT | PARTY; a passage's seq is its
+    position in `passages` (they are stored with seq 0,1,2,...). In memory only; other passages
+    are kept as they are. Consecutive sentences with the same role are merged back together.
+    """
+    out: list[Passage] = []
+    for seq, p in enumerate(passages):
+        if p.role != SegmentRole.SUPREME_COURT:
+            out.append(p)
+            continue
+        cur_role, buf = None, ""
+        for k, sent in enumerate(split_sentences(p.text)):
+            role = _QUOTE_ROLE.get(quoted.get((seq, k)), SegmentRole.SUPREME_COURT)
+            if role != cur_role and buf:
+                out.append(Passage(p.segment_index, cur_role, buf))
+                buf = ""
+            cur_role = role
+            buf += sent
+        if buf:
+            out.append(Passage(p.segment_index, cur_role, buf))
+    return out

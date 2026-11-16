@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, ValidationError
 from .llm import LLMClient
 from .models import (JudgmentCitation, JudgmentStatus, L2Evidence, L2Label, Relation,
                      SegmentRole)
-from .retrieve import Passage, clean_query, retrieve, split_passages
+from .retrieve import Passage, apply_quotes, clean_query, retrieve
 
 CONFIDENCE_THRESHOLD = 0.6
 
@@ -106,7 +106,7 @@ def query_llm(client: LLMClient, user: str, n: int) -> list[LLMResult] | None:
 
 
 def decide(passages: list[Passage], results: list[LLMResult]) -> tuple[L2Label, L2Evidence | None]:
-    """SPEC 7.5, pure rules."""
+    """SPEC_V2 C1, pure rules; only results with confidence >= CONFIDENCE_THRESHOLD count."""
     hits = [(passages[r.id - 1], r) for r in results if r.confidence >= CONFIDENCE_THRESHOLD]
 
     def pick(relation: Relation, roles: set[SegmentRole]):
@@ -119,20 +119,25 @@ def decide(passages: list[Passage], results: list[LLMResult]) -> tuple[L2Label, 
                           passage=p.text[:400], relation=r.relation, confidence=r.confidence)
 
     S, C = Relation.SUPPORTS, Relation.CONTRADICTS
-    for relation, roles, label in (
-        (S, {SegmentRole.SUPREME_COURT}, L2Label.COURT_HOLDING),
-        (C, {SegmentRole.SUPREME_COURT}, L2Label.CONTRADICTED),
-        (S, {SegmentRole.LOWER_COURT}, L2Label.LOWER_COURT_VIEW),
-        (S, {SegmentRole.PARTY_CLAIM}, L2Label.PARTY_ARGUMENT),
-    ):
-        h = pick(relation, roles)
-        if h:
-            return label, ev(h)
-    unclear = {SegmentRole.UNKNOWN, SegmentRole.MAIN_TEXT}
+    court = {SegmentRole.SUPREME_COURT}
+    sup, con = pick(S, court), pick(C, court)
+    if sup and not con:                                              # 1
+        return L2Label.COURT_HOLDING, ev(sup)
+    if sup and con:                                                  # 2
+        return L2Label.UNCERTAIN, ev(max((sup, con), key=lambda t: t[1].confidence))
+    if con:                                                          # 3
+        return L2Label.CONTRADICTED, ev(con)
+    low = pick(S, {SegmentRole.LOWER_COURT})                         # 4
+    if low:
+        return L2Label.LOWER_COURT_VIEW, ev(low)
+    party = pick(S, {SegmentRole.PARTY_CLAIM})                       # 5
+    if party:
+        return L2Label.PARTY_ARGUMENT, ev(party)
+    unclear = {SegmentRole.UNKNOWN, SegmentRole.MAIN_TEXT}           # 6
     cands = [h for h in (pick(S, unclear), pick(C, unclear)) if h]
     if cands:
         return L2Label.UNCERTAIN, ev(max(cands, key=lambda t: t[1].confidence))
-    return L2Label.NOT_IN_JUDGMENT, None
+    return L2Label.NOT_IN_JUDGMENT, None                             # 7
 
 
 def judge_passages(claim: str, passages: list[Passage], client: LLMClient):
@@ -208,6 +213,8 @@ def apply_l2(judgments: list[JudgmentCitation], con: sqlite3.Connection, client:
         if store_prep(con, pl, res, client):
             stats.prep_new += 1
     capped_jids = {plans[i].jid for i in skipped}
+    from .prep import _current_ok, load_quotes
+    prepared = {jid: _current_ok(con, jid) for jid in jids}
 
     # step 3: compare; one call per distinct (claim sentence, jid)
     jobs: dict[tuple[str, str], dict] = {}
@@ -219,7 +226,10 @@ def apply_l2(judgments: list[JudgmentCitation], con: sqlite3.Connection, client:
         claim = j.claim_sentence or ""
         key = (claim, j.jid)
         if key not in jobs:
-            top = retrieve(clean_query(claim, raws), load_passages(con, j.jid))
+            passages = load_passages(con, j.jid)
+            if prepared[j.jid]:                                  # C2: split off the quoted sentences
+                passages = apply_quotes(passages, load_quotes(con, j.jid))
+            top = retrieve(clean_query(claim, raws), passages)
             jobs[key] = {"top": top, "claim": claim,
                          "user": build_user_prompt(claim, top) if top else None, "cites": []}
         jobs[key]["cites"].append(j)
@@ -239,3 +249,5 @@ def apply_l2(judgments: list[JudgmentCitation], con: sqlite3.Connection, client:
                 j.l2_label, j.l2_evidence = L2Label.UNCERTAIN, None
             else:
                 j.l2_label, j.l2_evidence = decide(v["top"], res[i])
+                if j.l2_label == L2Label.COURT_HOLDING and (not prepared[j.jid] or j.procedural_dismissal):
+                    j.l2_label = L2Label.UNCERTAIN               # C2.2 (prep failed) / C3 (procedural ruling)

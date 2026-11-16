@@ -13,6 +13,7 @@ from datetime import datetime
 from pydantic import BaseModel, ValidationError
 
 from .judge import _log_failure
+from .retrieve import split_sentences  # noqa: F401  (re-exported; defined in retrieve.py)
 from .segment import SEGMENT_RULES_VERSION
 
 PREP_PROMPT_VERSION = 1
@@ -34,11 +35,6 @@ PREP_USER_SUFFIX = """
 
 請輸出：
 {"quoted":[{"id":1,"speaker":"LOWER_COURT"},{"id":2,"speaker":"PARTY"}]}"""
-
-
-def split_sentences(text: str) -> list[str]:
-    """Split at 。 (kept at the end of the sentence); a trailing remainder is its own sentence."""
-    return [p for p in re.split(r"(?<=。)", text) if p.strip()]
 
 
 def build_prep_prompt(items: list[tuple[int, str]]) -> str:

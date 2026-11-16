@@ -249,3 +249,30 @@
 - `prep-samples`（40 份樣本的轉述句整理）：**未執行**，需要 API 金鑰。
 - `ensure_prepared`／`call_prep` 只用 `MockClient` 測過；真實模型是否能穩定回傳符合格式的 JSON、輸出上限 2,000 token 是否足夠，未驗證。
 - 並行與呼叫上限只用計數的 `MockClient` 與時間測試驗證，沒有對真實 API 壓測。
+
+## SPEC_V2 Phase C
+
+### 1. 完成了什麼（對應 SPEC_V2 §8）
+- C1：`judge.decide` 改為新的七條規則（本院 SUPPORTS 且沒有本院 CONTRADICTS → COURT_HOLDING；兩者都有 → UNCERTAIN；只有本院 CONTRADICTS → CONTRADICTED；LOWER_COURT SUPPORTS → LOWER_COURT_VIEW；PARTY_CLAIM SUPPORTS → PARTY_ARGUMENT；UNKNOWN／MAIN_TEXT → UNCERTAIN；其他 → NOT_IN_JUDGMENT），`l2_evidence` 依規格取信心最高者。`SYSTEM_PROMPT`、`USER_TEMPLATE` 一個字未改，傳給比對用 LLM 的內容仍只有段落文字（有測試確認不含角色）。
+- C2：`retrieve.apply_quotes`（本院 passage 依轉述句標註在記憶體中重新拆分，同說話者的連續句子併成一段，`segment_index` 沿用）；`apply_l2` 在整理成功時用它；整理失敗時用原段落，結果為 COURT_HOLDING 就改為 UNCERTAIN（證據保留）。`split_sentences` 搬到 `retrieve.py`（避免 `prep`／`judge`／`retrieve` 循環 import），`prep.split_sentences` 仍可使用。
+- C3：`procedural_dismissal` 為 True 的裁判，結果為 COURT_HOLDING 就改為 UNCERTAIN（Phase F 已在 build-index 時算出旗標）。
+- C4：「綠色精確率」「有效判斷率」在 Phase T 已實作並有手算測試。
+
+### 2. 我做的解讀
+1. C2 第 2 點與 C3 的降級發生在 `decide` 之後、同一次 `apply_l2` 內；整理被呼叫上限略過的裁判，其引用本來就是 `NOT_RUN`，不受影響。
+2. `apply_quotes` 以 passage 在清單中的位置當作 `seq`（`passages` 表的 `seq` 從 0 連續編號，與 `load_passages` 的順序一致）。
+3. 報告上的 §11 加註文字（程序駁回、書狀沒寫法院名稱…）留給 Phase D 的報告重寫。
+
+### 3. 被調整預期值的既有測試
+無（舊的規則 1、3、4、5、6 的測試結果在新規則下不變；規則 2 是新的行為，新增測試）。
+
+### 4. pytest
+229 項通過（Phase F 結束時 213 項）。
+
+### 5. 評測數字（AI 標註，未經人工複核）
+- 沒有 API 金鑰，只跑 `--no-l2`：v1 抽取 42/42 → 42/42、L1 39/42 → 39/42；v2 抽取 91/91 → 91/91、L1 84/84 → 84/84（沒有變化）。
+- **含 L2 的評測與 C5 放行檢查：未執行**（沒有 `CITECHECK_MODEL`／API 金鑰）。Phase B 補充記錄的最近一次真實 API 結果（Phase C 之前）：綠色精確率 15/17（88.2%）；金標為 PARTY_ARGUMENT 或 LOWER_COURT_VIEW 而系統輸出 COURT_HOLDING 的題數 2（B04、C04）。這兩項都還沒達到 C5 的門檻（≥0.90、≤1 題），Phase C 的效果沒有驗證。
+
+### 6. 沒做或沒驗證的事
+- **C5 放行檢查未執行**（§1.6 第 4 點）。有金鑰時：先 `citecheck prep-samples`（選用），再 `citecheck eval eval/testset_v2.jsonl --out eval/results_v2`（第一次會替被引用的裁判做轉述句整理，之後走快取），檢查綠色精確率 ≥ 0.90 與「金標 PARTY_ARGUMENT／LOWER_COURT_VIEW 卻輸出 COURT_HOLDING」題數 ≤ 1。若不符，依 §8 C5 在 PROGRESS.md 逐題列出錯誤，**不要自行調整門檻、提示詞或規則**。
+- 已知不會被 Phase C 修正的缺陷：切段規則在原審理由的小段落被「查」或「當事人陳述句」誤觸發（C04、C05 的成因）；SPEC_V2 沒有安排修切段規則。
