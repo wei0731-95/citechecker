@@ -339,3 +339,31 @@ def test_gold_chunks_and_hit_rule():
     assert passage_hits_gold("前文" + "甲" * 15 + "後文", chunks)              # 1 of 3 chunks is enough
     assert not passage_hits_gold("毫不相干的段落", chunks)
     assert passage_hits_gold("短", ["短"]) and not passage_hits_gold("長", [])
+
+
+# ------------------------------------------------------------------ SPEC_V3 H2
+class _NamedMock(MockClient):
+    def __init__(self, responses, model):
+        super().__init__(responses)
+        self.model = model
+
+
+def test_h2_prep_by_another_model_is_redone_then_reused(con, monkeypatch):
+    monkeypatch.delenv("CITECHECK_MODEL", raising=False)
+    build_index(con)
+    assert ensure_prepared(JID, con, _NamedMock(quoted(), "A")) is True
+    assert con.execute("SELECT model FROM judgment_prep WHERE jid=?", (JID,)).fetchone()[0] == "A"
+    b = _NamedMock(quoted((1, "PARTY")), "B")
+    assert ensure_prepared(JID, con, b) is True and len(b.calls) == 1
+    assert con.execute("SELECT model FROM judgment_prep WHERE jid=?", (JID,)).fetchone()[0] == "B"
+    assert list(load_quotes(con, JID).values()) == ["PARTY"]
+    b2 = _NamedMock("never used", "B")
+    assert ensure_prepared(JID, con, b2) is True and b2.calls == []
+
+
+def test_h2_current_model_prefers_env(monkeypatch):
+    monkeypatch.setenv("CITECHECK_MODEL", "env-model")
+    assert prep.current_model(_NamedMock("x", "client-model")) == "env-model"
+    monkeypatch.delenv("CITECHECK_MODEL")
+    assert prep.current_model(_NamedMock("x", "client-model")) == "client-model"
+    assert prep.current_model(MockClient("x")) is None

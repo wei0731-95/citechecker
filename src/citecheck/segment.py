@@ -15,7 +15,7 @@ from .models import SegmentRole
 # ------------------------------------------------------------------ markers
 # Starting candidates from SPEC 7.1; revised against real data in docs/SEGMENT_RULES.md.
 # Bump by hand whenever the segmentation rules change (build-index rebuilds when it differs).
-SEGMENT_RULES_VERSION = 1
+SEGMENT_RULES_VERSION = 2
 
 PARTY_MARKERS = [
     "上訴人主張", "被上訴人主張", "本件上訴人主張", "被上訴人則以", "上訴人則以",
@@ -40,6 +40,39 @@ _STRONG_STARTS = ("據上論結", "惟按", "惟查", "本院", "經核")
 # validating on real data; checked after the explicit markers).
 _PARTY_CLAUSE = re.compile(r"^[^，。：；]{0,40}?(?:主張|則以|辯稱|抗辯|陳稱|略以)")
 _LEAD_JUNK = re.compile(r"^[\s　​﻿]+")
+# SPEC_V3 H1. 原審理由的結尾句。用在「段落去掉頭尾空白後的最後 45 個字」上。
+_LOWER_END = re.compile(r"等[詞語情][，,]?資?為其(?:判斷|論斷|心證)之基礎。?$")
+# 同一句型出現在段落中間（後面還有文字）。
+_LOWER_END_MID = re.compile(r"等[詞語情][，,]?資?為其(?:判斷|論斷|心證)之基礎。")
+
+
+def _ends_lower(paragraph: str) -> bool:
+    return bool(_LOWER_END.search(paragraph.strip()[-45:]))
+
+
+def _split_lower_end(paras: list[str]) -> list[str]:
+    """H1 rule 1: split a paragraph right after a mid-paragraph 結尾句 (first match only)."""
+    out: list[str] = []
+    for p in paras:
+        m = _LOWER_END_MID.search(p)
+        if m and p[m.end():].strip():
+            out += [p[:m.end()], p[m.end():].strip()]
+        else:
+            out.append(p)
+    return out
+
+
+def _backfill_lower(reason: list["Segment"]) -> None:
+    """H1 rule 3: from the first LOWER_MARKERS paragraph of each round up to its 結尾句 -> LOWER_COURT."""
+    prev = -1
+    for i, s in enumerate(reason):
+        if not _ends_lower(s.text):
+            continue
+        a = next((k for k in range(prev + 1, i + 1) if reason[k].marker in LOWER_MARKERS), None)
+        if a is not None:
+            for k in range(a, i + 1):
+                reason[k].role = SegmentRole.LOWER_COURT
+        prev = i
 
 
 @dataclass
@@ -138,11 +171,15 @@ def segment(full_text: str) -> list[Segment]:
     # and lower court's positions under unmarked paragraphs (validated: see SEGMENT_RULES.md).
     first_line = next((ln for ln in lines if ln.strip()), "")
     state = SegmentRole.SUPREME_COURT if "裁定" in first_line else SegmentRole.UNKNOWN
-    for p in _reflow(reason):
+    first_reason = len(segs)
+    for p in _split_lower_end(_reflow(reason)):                  # H1 rule 1
         role, marker = role_of(p)
         if role is not None:
             state = role
         add(state, p, "reason", marker)
+        if _ends_lower(p):                                       # H1 rule 2
+            state = SegmentRole.SUPREME_COURT
+    _backfill_lower(segs[first_reason:])                         # H1 rule 3
     if any(ln.strip() for ln in footer):
         add(SegmentRole.UNKNOWN, " ".join(ln.strip() for ln in footer if ln.strip()), "footer")
     return segs

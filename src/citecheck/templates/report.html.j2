@@ -5,71 +5,119 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>引用查核報告</title>
 <style>
-:root{--bg:#fff;--fg:#1f2328;--muted:#656d76;--line:#d0d7de;--card:#f6f8fa;
---green:#d1f2d6;--red:#ffd0cc;--orange:#ffe2b8;--gray:#e4e7eb}
-@media (prefers-color-scheme:dark){:root{--bg:#14171a;--fg:#e6e8ea;--muted:#9aa4ad;--line:#343b42;--card:#1c2126;
---green:#1d4a2a;--red:#5a2724;--orange:#5a4020;--gray:#32383e}}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 "Noto Sans TC","Microsoft JhengHei",sans-serif}
-main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
-h1{font-size:1.5rem;margin:0 0 4px} h2{font-size:1.15rem;margin:32px 0 10px;border-bottom:1px solid var(--line);padding-bottom:4px}
-.meta{color:var(--muted);font-size:.9rem}
-.statement{border:2px solid var(--line);border-radius:6px;padding:10px 14px;background:var(--card);font-weight:600}
-.notice{border:1px solid var(--line);border-left:4px solid #d98b00;padding:8px 12px;margin:12px 0}
-table{border-collapse:collapse;width:100%;margin:8px 0}
-th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;font-size:.95rem} th{background:var(--card)}
-.brief{white-space:pre-wrap;word-break:break-word;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px}
-a.hl{color:inherit;text-decoration:none;border-radius:3px;padding:1px 2px}
-.tag{font-size:.72rem;border:1px solid var(--line);border-radius:3px;padding:0 3px;margin-left:2px;vertical-align:super}
+:root{--bg:#fff;--fg:#1f2328;--muted:#5d6670;--line:#d0d7de;--card:#f6f8fa;--accent:#0b5cad;
+--green:#d1f2d6;--red:#ffd0cc;--orange:#ffe2b8;--gray:#e4e7eb;
+--green-s:#1f8a3b;--red-s:#c62828;--orange-s:#c77700;--gray-s:#7a838c}
+@media (prefers-color-scheme:dark){:root{--bg:#14171a;--fg:#e6e8ea;--muted:#9aa4ad;--line:#343b42;--card:#1c2126;--accent:#6cb2ff;
+--green:#1d4a2a;--red:#5a2724;--orange:#5a4020;--gray:#32383e;
+--green-s:#4cc46e;--red-s:#ff6b5e;--orange-s:#f0a43a;--gray-s:#8c959e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 "Noto Sans TC","Microsoft JhengHei",sans-serif}
+main{max-width:960px;margin:0 auto;padding:20px 16px 56px}
+a{color:var(--accent)}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px}
+h1{font-size:1.6rem;margin:0}
+.back{font-weight:600;text-decoration:none}
+h2{font-size:1.2rem;margin:36px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+.meta{color:var(--muted);font-size:.88rem;margin:4px 0 12px}
+.statement{border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:6px;padding:10px 14px;background:var(--card);font-weight:600;margin:12px 0}
+.notice{border:1px solid var(--line);border-left:5px solid var(--orange-s);border-radius:6px;padding:8px 12px;margin:12px 0;font-weight:600}
 .green{background:var(--green)} .red{background:var(--red)} .orange{background:var(--orange)} .gray{background:var(--gray)}
-.card{border:1px solid var(--line);border-radius:6px;padding:10px 14px;margin:12px 0;background:var(--card)}
-.card h3{margin:0 0 6px;font-size:1rem}
-.badge{display:inline-block;border-radius:10px;padding:0 10px;font-size:.85rem;margin-right:6px}
-blockquote{margin:6px 0;padding:6px 12px;border-left:3px solid var(--line);white-space:pre-wrap;word-break:break-word}
-.k{color:var(--muted)} footer{margin-top:40px;border-top:1px solid var(--line);padding-top:12px;color:var(--muted);font-size:.92rem}
-footer p{margin:.3em 0}
+.badge{display:inline-block;border-radius:999px;padding:1px 12px;font-size:.88rem;font-weight:700;white-space:nowrap}
+/* summary tiles (kept as a table: label cell + count cell) */
+table.tiles{width:100%;border-collapse:separate;border-spacing:0}
+table.tiles tbody{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+table.tiles tr{display:flex;flex-direction:column;border:1px solid var(--line);border-top:6px solid var(--gray-s);border-radius:8px;padding:10px 12px;background:var(--card)}
+table.tiles tr.ok{border-top-color:var(--green-s)} table.tiles tr.check{border-top-color:var(--red-s)}
+table.tiles tr.notice{border-top-color:var(--orange-s)} table.tiles tr.unknown{border-top-color:var(--gray-s)}
+table.tiles td{display:block;padding:0;border:0}
+table.tiles td:nth-child(2){font-size:2rem;font-weight:800;line-height:1.2;margin-top:4px}
+table.tiles tr.zero td:nth-child(2){color:var(--muted)}
+table.tiles td:nth-child(3){font-size:.82rem;color:var(--muted);line-height:1.45}
+@media (max-width:640px){table.tiles tbody{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* overview list */
+.ovt{margin:22px 0 6px;font-weight:700}
+table.ov{width:100%;border-collapse:collapse;font-size:.95rem}
+table.ov td{border-top:1px solid var(--line);padding:7px 8px;vertical-align:top}
+table.ov tr:last-child td{border-bottom:1px solid var(--line)}
+table.ov td.num{width:2.5em;color:var(--muted);text-align:right}
+table.ov td.lv{width:7em}
+table.ov a{color:inherit;text-decoration:none} table.ov a:hover .raw{text-decoration:underline}
+table.ov .raw{font-weight:700} table.ov .ex{display:block;color:var(--muted);font-size:.88rem;line-height:1.5}
+/* brief text */
+.legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.brief{white-space:pre-wrap;word-break:break-word;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;line-height:2.1}
+a.hl{color:inherit;text-decoration:none;border-radius:4px;padding:2px 3px;border-bottom:2px solid transparent}
+a.hl.green{border-bottom-color:var(--green-s)} a.hl.red{border-bottom-color:var(--red-s)}
+a.hl.orange{border-bottom-color:var(--orange-s)} a.hl.gray{border-bottom-color:var(--gray-s)}
+.tag{font-size:.72rem;font-weight:700;border:1px solid var(--line);border-radius:4px;padding:0 4px;margin:0 3px;background:var(--bg);white-space:nowrap;vertical-align:1px}
+/* detail cards */
+.card{border:1px solid var(--line);border-left:6px solid var(--gray-s);border-radius:8px;padding:12px 16px;margin:14px 0;background:var(--card)}
+.card[data-level=ok]{border-left-color:var(--green-s)} .card[data-level=check]{border-left-color:var(--red-s)}
+.card[data-level=notice]{border-left-color:var(--orange-s)} .card[data-level=unknown]{border-left-color:var(--gray-s)}
+.card h3{margin:0 0 8px;font-size:1.02rem;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.card h3 .raw{font-weight:700} .card h3 .goto{margin-left:auto;font-size:.85rem;font-weight:400}
+.card .ex{margin:6px 0 10px;font-weight:600}
+.card .row{margin:4px 0}
+blockquote{margin:6px 0 10px;padding:8px 12px;border-left:3px solid var(--line);background:var(--bg);border-radius:0 6px 6px 0;white-space:pre-wrap;word-break:break-word}
+.links{display:flex;flex-wrap:wrap;gap:4px 18px;margin:6px 0}
+.sim{border-top:1px dashed var(--line);margin-top:12px;padding-top:8px}
+.k{color:var(--muted)}
+ul.unrec li{margin:4px 0}
+footer{margin-top:44px;border-top:1px solid var(--line);padding-top:12px;color:var(--muted);font-size:.9rem}
+footer p{margin:.35em 0}
+:target{scroll-margin-top:12px}
+.card:target{outline:3px solid var(--accent);outline-offset:2px}
+@media print{body{font-size:12pt}.back,.goto{display:none}a{color:inherit;text-decoration:none}.card,tr{break-inside:avoid}main{max-width:none;padding:0}}
 </style>
 </head>
 <body>
 <main>
-<h1>引用查核報告</h1>
+<div class="top"><h1>引用查核報告</h1>{% if back_link %}<a class="back" href="/">{{ back_link }}</a>{% endif %}</div>
 <p class="meta">檔案：{{ r.input_file }}　產生時間：{{ r.generated_at }}</p>
 <p class="statement">{{ header }}</p>
 {% if cap_note %}<p class="notice">{{ cap_note }}</p>{% endif %}
 
 <h2>摘要</h2>
-<table>
-<tr><th>等級</th><th>筆數</th></tr>
-{% for level in ["ok", "check", "notice", "unknown"] %}<tr><td><span class="badge {{ colors[level] }}">{{ labels[level] }}</span></td><td>{{ counts[level] }}</td></tr>
+<table class="tiles" aria-label="四個等級各有幾筆">
+{% for level in ["check", "notice", "unknown", "ok"] %}<tr class="{{ level }}{% if counts[level] == 0 %} zero{% endif %}"><td><span class="badge {{ colors[level] }}">{{ labels[level] }}</span></td><td>{{ counts[level] }}</td><td>{{ help[level] }}</td></tr>
 {% endfor %}
 </table>
+{% if overview %}
+<p class="ovt">{{ overview_title }}</p>
+<table class="ov">
+{% for c in overview %}<tr><td class="num">{{ c.n }}</td><td class="lv"><span class="badge {{ c.color }}">{{ c.label }}</span></td><td><a href="#c{{ c.n }}"><span class="raw">{{ c.raw }}</span>{% if c.context %}<span class="k">{{ c.context }}</span>{% endif %}<span class="ex">{{ c.explanation }}</span></a></td></tr>
+{% endfor %}
+</table>
+{% endif %}
 
 <h2>書狀原文</h2>
-<p class="meta"><span class="badge green">查得到</span><span class="badge red">請確認</span><span class="badge orange">請留意</span><span class="badge gray">無法查核</span>（顏色之外，每個引用後面都有文字標籤）</p>
+<p class="legend"><span class="badge green">查得到</span><span class="badge red">請確認</span><span class="badge orange">請留意</span><span class="badge gray">無法查核</span>（顏色之外，每個引用後面都有文字標籤；點選引用可跳到說明）</p>
 <div class="brief">{% for p in pieces %}{% if p.color %}<a class="hl {{ p.color }}" id="t{{ p.n }}" href="#c{{ p.n }}">{{ p.text }}</a><span class="tag">{{ p.label }}</span>{% else %}{{ p.text }}{% endif %}{% endfor %}</div>
 
 <h2>逐筆明細</h2>
 {% for c in rows %}
-<div class="card" id="c{{ c.n }}">
-<h3>{{ c.n }}. <span class="badge {{ c.color }}">{{ c.label }}</span><a href="#t{{ c.n }}">回到全文</a></h3>
-<div><span class="k">原文片段：</span>{{ c.raw }}</div>
-<p>{{ c.explanation }}{% for note in c.notes %}<br>{{ note }}{% endfor %}</p>
+<div class="card" data-level="{{ c.level }}" id="c{{ c.n }}">
+<h3><span class="k">{{ c.n }}.</span><span class="badge {{ c.color }}">{{ c.label }}</span><span class="raw">{{ c.raw }}</span>{% if c.context %}<span class="k">{{ c.context }}</span>{% endif %}<a class="goto" href="#t{{ c.n }}">回到全文</a></h3>
+<p class="ex">{{ c.explanation }}{% for note in c.notes %}<br>{{ note }}{% endfor %}</p>
 {% if c.kind == "STATUTE" %}
-{% if c.law_name %}<div><span class="k">法規／條號：</span>{{ c.law_name }}{% if c.article %} 第 {{ c.article }} 條{% endif %}{% if c.paragraph %} 第 {{ c.paragraph }} 項{% endif %}{% if c.subparagraph %} 第 {{ c.subparagraph }} 款{% endif %}</div>{% endif %}
+{% if c.law_name %}<div class="row"><span class="k">法規／條號：</span>{{ c.law_name }}{% if c.article %} 第 {{ c.article }} 條{% endif %}{% if c.paragraph %} 第 {{ c.paragraph }} 項{% endif %}{% if c.subparagraph %} 第 {{ c.subparagraph }} 款{% endif %}</div>{% endif %}
 {% if c.article_text %}<div class="k">現行條文：</div><blockquote>{{ c.article_text }}</blockquote>{% endif %}
-{% if c.article_url %}<div><a href="{{ c.article_url }}" target="_blank" rel="noopener">{{ article_link }}</a></div>{% endif %}
-{% if c.law_url %}<div><a href="{{ c.law_url }}" target="_blank" rel="noopener">{{ law_link }}</a></div>{% endif %}
+{% if c.article_url or c.law_url %}<div class="links">{% if c.article_url %}<a href="{{ c.article_url }}" target="_blank" rel="noopener">{{ article_link }}</a>{% endif %}{% if c.law_url %}<a href="{{ c.law_url }}" target="_blank" rel="noopener">{{ law_link }}</a>{% endif %}</div>{% endif %}
 {% elif c.kind == "JUDGMENT" %}
-<div><span class="k">字號：</span>{{ c.court or "（未標示法院）" }} {{ c.year }} 年度{{ c.case_word }}字第 {{ c.case_no }} 號{% if c.doc_kind %}　{{ c.doc_kind }}{% endif %}</div>
+<div class="row"><span class="k">字號：</span>{{ c.court or "（未標示法院）" }} {{ c.year }} 年度{{ c.case_word }}字第 {{ c.case_no }} 號{% if c.doc_kind %}　{{ c.doc_kind }}{% endif %}</div>
 {% if c.jid %}
-{% if c.pdf_url %}<div><a href="{{ c.pdf_url }}" target="_blank" rel="noopener">{{ pdf_link }}</a></div>{% endif %}
+{% if c.pdf_url %}<div class="links"><a href="{{ c.pdf_url }}" target="_blank" rel="noopener">{{ pdf_link }}</a></div>{% endif %}
 {% if c.main_text %}<div class="k">這件裁判的主文：</div><blockquote>{{ c.main_text }}</blockquote>{% endif %}
 {% if c.claim_sentence %}<div class="k">書狀主張句：</div><blockquote>{{ c.claim_sentence }}</blockquote>{% endif %}
 {% if c.evidence %}<div class="k">判決中最相關的段落（角色：{{ c.evidence_role }}；與書狀說法的關係：{{ c.evidence_relation }}）：</div><blockquote>{{ c.evidence.passage }}</blockquote>{% endif %}
 {% endif %}
 {% if c.similar %}
+<div class="sim">
 <div class="k"><b>{{ zh.SIMILAR_TITLE }}</b></div>
 <p class="k">{{ zh.SIMILAR_NOTE }}</p>
-{% for s in c.similar %}<div>{{ s.display }}{% if s.pdf_url %}　<a href="{{ s.pdf_url }}" target="_blank" rel="noopener">{{ pdf_link }}</a>{% endif %}<blockquote>{{ s.passage }}</blockquote></div>{% endfor %}
+{% for s in c.similar %}<div class="row">{{ s.display }}{% if s.pdf_url %}　<a href="{{ s.pdf_url }}" target="_blank" rel="noopener">{{ pdf_link }}</a>{% endif %}<blockquote>{{ s.passage }}</blockquote></div>{% endfor %}
+</div>
 {% endif %}
 {% endif %}
 </div>
@@ -77,7 +125,7 @@ footer p{margin:.3em 0}
 
 {% if r.unrecognized %}
 <h2>{{ zh.UNRECOGNIZED_TITLE }}</h2>
-<ul>{% for u in r.unrecognized %}<li>{{ u.text }}</li>{% endfor %}</ul>
+<ul class="unrec">{% for u in r.unrecognized %}<li>{{ u.text }}</li>{% endfor %}</ul>
 {% endif %}
 
 {% if r.warnings %}<h2>警告</h2><ul>{% for w in r.warnings %}<li class="k">{{ w }}</li>{% endfor %}</ul>{% endif %}

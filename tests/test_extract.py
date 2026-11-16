@@ -178,3 +178,50 @@ def test_same_law_without_antecedent_unresolved(lex):
 def test_longest_match_prefers_full_name(lex):
     (c,) = S("刑事訴訟法第1條", lex)
     assert c.law_name == "刑事訴訟法"
+
+
+# ------------------------------------------------------------------ SPEC_V3 H3
+def test_h3_constitutional_court_judgment_is_only_an_other_authority(lex):
+    from citecheck.extract import extract_full
+    r = extract_full(normalize("憲法法庭112年憲判字第4號判決"), lex)
+    assert r.judgments == []
+    assert [a.kind for a in r.other_authorities] == ["憲判字"]
+
+
+# ------------------------------------------------------------------ SPEC_V3 H5
+def S(text, lex):
+    return run(text, lex)[0]
+
+
+def test_h5_paragraph_run(lex):
+    a, b = S("民法第195條第1項、第5項", lex)
+    assert (a.article, a.paragraph, a.is_continuation) == ("195", 1, False)
+    assert (b.law_name, b.article, b.paragraph, b.subparagraph, b.is_continuation, b.raw) == (
+        "民法", "195", 5, None, True, "第5項")
+
+
+def test_h5_subparagraph_run_keeps_paragraph(lex):
+    a, b = S("民法第1052條第1項第3款、第11款", lex)
+    assert (a.paragraph, a.subparagraph) == (1, 3)
+    assert (b.article, b.paragraph, b.subparagraph, b.is_continuation) == ("1052", 1, 11, True)
+
+
+def test_h5_next_article_is_not_a_continuation(lex):
+    a, b = S("民法第184條第1項、第185條", lex)
+    assert [a.article, b.article] == ["184", "185"] and not a.is_continuation and not b.is_continuation
+
+
+def test_h5_range_gives_both_ends_only(lex):
+    a, b = S("民法第184條第1項至第3項", lex)
+    assert [a.paragraph, b.paragraph] == [1, 3] and b.is_continuation
+
+
+def test_h5_no_run_without_paragraph_or_subparagraph(lex):
+    (a,) = S("民法第184條、第2項", lex)
+    assert a.paragraph is None
+
+
+def test_h5_same_article_after_run(lex):
+    a, b, c = S("民法第184條第1項及第2項，同條第1項後段", lex)
+    assert [x.paragraph for x in (a, b, c)] == [1, 2, 1]
+    assert (c.law_name, c.article, c.is_continuation) == ("民法", "184", False)

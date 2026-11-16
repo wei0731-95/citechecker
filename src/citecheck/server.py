@@ -14,10 +14,11 @@ from .db import DEFAULT_DB, connect
 from .extract import build_lexicon
 from .index import IndexNotReady
 from .llm import CachingClient, LLMConfigError, client_from_env
-from .report import HEADER_STATEMENT, build_report, render_html
+from .report import (HEADER_STATEMENT, LEVEL_COLOR, LEVEL_HELP, LEVEL_LABEL, LEVEL_ORDER, build_report,
+                     render_html)
 
 MAX_CHARS = 50_000
-MAX_BODY = 400_000
+MAX_BODY = 600_000
 MSG_TOO_LONG = "文字超過 50,000 字，請分段查核。"
 MSG_EMPTY = "請貼上書狀文字。"
 L2_LABEL = "同時比對內容是否相符（會把含有引用的句子傳送到外部 AI 服務，請先自行刪除姓名、身分證字號、地址等個人資料）"
@@ -25,12 +26,20 @@ BUTTON_BUSY = "查核中，內容比對可能需要一到兩分鐘，請不要�
 ENV_HELP = ("需要設定的環境變數：CITECHECK_MODEL，以及 ANTHROPIC_API_KEY（CITECHECK_PROVIDER 未設定或為 anthropic）"
             "或 OPENAI_API_KEY（CITECHECK_PROVIDER=openai）")
 
+# Usage hints on the form page (UI aid, SPEC_V3 Phase H; the fixed SPEC_V2 wording above is unchanged).
+TEXT_HINT = ("可直接貼上從 Word 或 PDF 複製的文字，最多 50,000 字。查核在這台電腦上進行，"
+             "貼上的文字不會存檔；沒有勾選下方選項時，不會傳送到任何外部服務。")
+L2_HINT = "不勾選：只確認法條與字號查不查得到，幾秒內完成。勾選：再比對書狀說法與條文、裁判內容是否相符，需要先設定 AI 服務的金鑰。"
+LEGEND_TITLE = "報告怎麼看"
+
 _ENV = Environment(loader=PackageLoader("citecheck", "templates"), autoescape=select_autoescape(["html", "j2"]))
 
 
 def render_form(text: str = "", error: str | None = None, l2: bool = False) -> bytes:
     return _ENV.get_template("form.html.j2").render(
-        text=text, error=error, l2=l2, header=HEADER_STATEMENT, l2_label=L2_LABEL, busy=BUTTON_BUSY).encode("utf-8")
+        text=text, error=error, l2=l2, header=HEADER_STATEMENT, l2_label=L2_LABEL, busy=BUTTON_BUSY,
+        text_hint=TEXT_HINT, l2_hint=L2_HINT, legend_title=LEGEND_TITLE,
+        legend=[(LEVEL_COLOR[k], LEVEL_LABEL[k], LEVEL_HELP[k]) for k in LEVEL_ORDER]).encode("utf-8")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -110,7 +119,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, render_form(text, str(e), want_l2))
         finally:
             con.close()
-        self._send(200, render_html(report).encode("utf-8"))
+        self._send(200, render_html(report, back_link=True).encode("utf-8"))
 
     def _not_found(self):
         self._plain(404, "Not Found")

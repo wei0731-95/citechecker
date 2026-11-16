@@ -121,7 +121,7 @@ def test_foreign_origin_is_403_but_local_origin_is_fine(srv):
 
 def test_oversized_or_missing_content_length_is_413_without_reading_the_body(srv):
     port = srv.server_address[1]
-    assert raw_request(srv, "POST", "/check", {"Host": f"127.0.0.1:{port}", "Content-Length": "400001"})[0] == 413
+    assert raw_request(srv, "POST", "/check", {"Host": f"127.0.0.1:{port}", "Content-Length": "600001"})[0] == 413
     assert raw_request(srv, "POST", "/check", {"Host": f"127.0.0.1:{port}", "Content-Length": "abc"})[0] == 413
     assert raw_request(srv, "POST", "/check", {"Host": f"127.0.0.1:{port}"})[0] == 413
 
@@ -188,10 +188,27 @@ def test_missing_index_is_reported_on_the_form_when_l2_is_requested(srv, monkeyp
     assert status == 200       # the brief has no FOUND judgment here, so no index is needed and no API call is made
 
 
-def test_very_long_cjk_text_hits_the_body_limit_first(srv):
-    # Known consequence of the two fixed limits (SPEC_V2 section 9): a form encodes one Chinese
-    # character as 9 bytes, so ~44,500 characters already exceed the 400,000-byte body limit.
-    with pytest.raises(urllib.error.HTTPError) as e:
-        post(srv, {"text": "甲" * 45000})
-    assert e.value.code == 413
-    assert post(srv, {"text": "甲" * 40000})[0] == 200
+def test_h4_50000_cjk_characters_fit_under_the_body_limit(srv):
+    # SPEC_V3 H4: a form encodes one Chinese character as 9 bytes; MAX_BODY 600,000 leaves room
+    # for 50,000 characters, so the user sees the "please split" message instead of a 413.
+    status, html = post(srv, {"text": "甲" * 50000})
+    assert status == 200 and "引用查核報告" in html and MSG_TOO_LONG not in html
+    status, html = post(srv, {"text": "甲" * 50001})
+    assert status == 200 and MSG_TOO_LONG in html and "引用查核報告" not in html
+    port = srv.server_address[1]
+    assert raw_request(srv, "POST", "/check", {"Host": f"127.0.0.1:{port}", "Content-Length": "600001"})[0] == 413
+
+
+def test_form_page_explains_the_steps_and_levels(srv):
+    from citecheck.report import LEVEL_HELP
+    from citecheck.server import L2_HINT, TEXT_HINT
+    with urllib.request.urlopen(base(srv) + "/") as r:
+        html = r.read().decode("utf-8")
+    assert TEXT_HINT in html and L2_HINT in html and all(h in html for h in LEVEL_HELP.values())
+    assert html.count("<script") == 1 and "checked" not in html
+
+
+def test_served_report_links_back_to_the_form(srv):
+    from citecheck.report import BACK_LINK_TEXT
+    status, html = post(srv, {"text": "依民法第184條第1項規定。"})
+    assert status == 200 and f'href="/">{BACK_LINK_TEXT}</a>' in html

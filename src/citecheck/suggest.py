@@ -53,7 +53,7 @@ def candidates(con: sqlite3.Connection, query: str, skip_jids: set[str], n: int 
 
 def apply_suggestions(judgments: list[JudgmentCitation], con: sqlite3.Connection, client, stats=None) -> None:
     from .models import RunStats
-    from .prep import _current_ok, call_prep, plan_prep, store_prep
+    from .prep import _current_ok, call_prep, current_model, plan_prep, store_prep
 
     if client is None or not has_fts(con):
         return
@@ -97,14 +97,15 @@ def apply_suggestions(judgments: list[JudgmentCitation], con: sqlite3.Connection
 
     # G2.4: preparation of every kept judgment, then drop failed / paraphrased ones
     jids = list(dict.fromkeys(jid for lst in kept.values() for jid, *_ in lst))
-    plans = [pl for pl in (plan_prep(con, jid) for jid in jids) if pl is not None]
+    model = current_model(client)
+    plans = [pl for pl in (plan_prep(con, jid, model) for jid in jids) if pl is not None]
     pres, pskipped = run_limited(plans, lambda pl: call_prep(client, pl), client)
     for i, pl in enumerate(plans):
         if i in pskipped:
             continue
         if store_prep(con, pl, pres[i], client):
             stats.prep_new += 1
-    ok = {jid: _current_ok(con, jid) for jid in jids}
+    ok = {jid: _current_ok(con, jid, model) for jid in jids}
 
     for q, lst in kept.items():
         final = []

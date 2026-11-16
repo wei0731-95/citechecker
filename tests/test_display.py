@@ -182,3 +182,39 @@ def test_report_shows_the_original_text_not_the_normalized_one():
     r = make_report(original_text=text, normalized_text="依 民法 第184條規定", statutes=[], judgments=[],
                     other_authorities=[], unrecognized=[])
     assert "**民法**" in render_html(r)
+
+
+# ------------------------------------------------------------------ SPEC_V3 Phase H: page usability
+def test_overview_lists_every_citation_most_urgent_first():
+    import re
+    r = make_report()
+    r.statutes.append(StatuteCitation(raw="民法第9條", span=Span(start=26, end=29), law_name="民法", article="9",
+                                      status=S.ARTICLE_NOT_FOUND))
+    html = render_html(r)
+    ov = html[html.index("各筆引用一覽"):html.index("書狀原文")]
+    labels = re.findall(r'<td class="lv"><span class="badge \w+">(\S+)</span>', ov)
+    assert labels == ["請確認", "請留意", "無法查核", "查得到"]
+    assert all(f'href="#c{n}"' in ov for n in range(1, 5))
+
+
+def test_summary_tiles_explain_each_level():
+    from citecheck.report import LEVEL_HELP
+    html = render_html(make_report())
+    assert all(h in html for h in LEVEL_HELP.values())
+    assert html.count('class="card"') == 3 and 'data-level="notice"' in html
+
+
+def test_back_link_only_on_the_served_page():
+    from citecheck.report import BACK_LINK_TEXT
+    assert BACK_LINK_TEXT not in render_html(make_report())
+    html = render_html(make_report(), back_link=True)
+    assert f'href="/">{BACK_LINK_TEXT}</a>' in html and "<script" not in html
+
+
+def test_continuation_shows_which_article_it_belongs_to():
+    r = make_report()
+    r.statutes.append(StatuteCitation(raw="第5項", span=Span(start=26, end=29), law_name="民法", article="195-1",
+                                      paragraph=5, status=S.PARAGRAPH_NOT_FOUND, is_continuation=True))
+    html = render_html(r)
+    assert html.count("（民法第195條之1）") == 2           # overview row + detail card
+    assert "（民法第1條）" not in html                      # ordinary citations are unchanged

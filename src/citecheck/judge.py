@@ -189,7 +189,7 @@ def apply_l2(judgments: list[JudgmentCitation], con: sqlite3.Connection, client:
     """Steps 2-3 of SPEC_V2 F3. Segments come from the `passages` table (build-index)."""
     from .index import check_index_ready, load_passages
     from .models import RunStats
-    from .prep import call_prep, plan_prep, store_prep
+    from .prep import call_prep, current_model, plan_prep, store_prep
 
     stats = stats if stats is not None else RunStats()
     raws = [j.raw for j in judgments]
@@ -205,7 +205,8 @@ def apply_l2(judgments: list[JudgmentCitation], con: sqlite3.Connection, client:
     check_index_ready(con, jids)                                 # before any API call
 
     # step 2: first-use preparation of each judgment (quoted sentences)
-    plans = [pl for pl in (plan_prep(con, jid) for jid in jids) if pl is not None]
+    model = current_model(client)
+    plans = [pl for pl in (plan_prep(con, jid, model) for jid in jids) if pl is not None]
     results, skipped = run_limited(plans, lambda pl: call_prep(client, pl), client)
     for pl, res, i in zip(plans, results, range(len(plans))):
         if i in skipped:
@@ -214,7 +215,7 @@ def apply_l2(judgments: list[JudgmentCitation], con: sqlite3.Connection, client:
             stats.prep_new += 1
     capped_jids = {plans[i].jid for i in skipped}
     from .prep import _current_ok, load_quotes
-    prepared = {jid: _current_ok(con, jid) for jid in jids}
+    prepared = {jid: _current_ok(con, jid, model) for jid in jids}
 
     # step 3: compare; one call per distinct (claim sentence, jid)
     jobs: dict[tuple[str, str], dict] = {}

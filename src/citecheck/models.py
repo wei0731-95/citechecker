@@ -122,6 +122,7 @@ class StatuteCitation(BaseModel):
     claim_sentence: str | None = None          # B2
     l2_label: StatuteL2Label = StatuteL2Label.NOT_RUN
     l2_confidence: float | None = None
+    is_continuation: bool = False              # SPEC_V3 H5: "、第5項" after "民法第195條第1項"
 
 
 class L2Evidence(BaseModel):

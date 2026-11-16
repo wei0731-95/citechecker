@@ -46,3 +46,46 @@ def test_paragraph_line_must_end_with_a_period_or_colon():
 def test_empty_or_deleted_text():
     assert parse_article("") is None
     assert parse_article("（刪除）") is None
+
+
+# ------------------------------------------------------------------ SPEC_V3 H5
+import json  # noqa: E402
+
+import pytest  # noqa: E402
+
+from citecheck.db import connect  # noqa: E402
+from citecheck.extract import Lexicon, extract_full  # noqa: E402
+from citecheck.llm import MockClient  # noqa: E402
+from citecheck.models import StatuteL2Label, StatuteStatus  # noqa: E402
+from citecheck.normalize import normalize  # noqa: E402
+from citecheck.statute_check import apply_statute_l2  # noqa: E402
+from citecheck.verify import verify_statute  # noqa: E402
+
+
+@pytest.fixture()
+def h5_con(tmp_path):
+    c = connect(tmp_path / "fake_h5.db")
+    c.execute("INSERT INTO laws(law_name, modified_date) VALUES('民法','2025')")
+    c.execute("INSERT INTO articles VALUES('民法','195','第一項本文。\n第二項本文。')")
+    c.commit()
+    return c
+
+
+def _h5_cites(text, con):
+    lex = Lexicon({"民法": "民法"}, {}, set())
+    return [verify_statute(s, con) for s in extract_full(normalize(text), lex).statutes]
+
+
+def test_h5_continuation_is_checked_for_paragraph(h5_con):
+    a, b = _h5_cites("依民法第195條第1項、第5項規定。", h5_con)
+    assert a.status == StatuteStatus.FOUND
+    assert b.is_continuation and b.status == StatuteStatus.PARAGRAPH_NOT_FOUND
+
+
+def test_h5_continuation_makes_no_llm_call(h5_con):
+    a, b = _h5_cites("依民法第195條第1項、第2項規定。", h5_con)
+    assert a.status == b.status == StatuteStatus.FOUND and b.claim_sentence
+    m = MockClient(json.dumps({"relation": "CONSISTENT", "confidence": 0.9}))
+    apply_statute_l2([a, b], m)
+    assert len(m.calls) == 1
+    assert a.l2_label == StatuteL2Label.MATCHES and b.l2_label == StatuteL2Label.NOT_RUN

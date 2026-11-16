@@ -104,6 +104,14 @@ PDF_LINK_TEXT = "看裁判原文（司法院 PDF）"
 # Level (shown as colour AND as a text label): ok green / check red / notice orange / unknown grey.
 LEVEL_LABEL = {"ok": "查得到", "check": "請確認", "notice": "請留意", "unknown": "無法查核"}
 LEVEL_COLOR = {"ok": "green", "check": "red", "notice": "orange", "unknown": "gray"}
+# One-line meaning of each level, shown next to the counts and on the form page (UI aid, SPEC_V3 Phase H).
+LEVEL_HELP = {"ok": "資料中查得到，仍請點連結核對原文",
+              "check": "查不到，或與裁判論述相反，請優先處理",
+              "notice": "查得到，但有需要留意的情形",
+              "unknown": "不在本工具範圍，或無法判斷"}
+LEVEL_ORDER = ["check", "notice", "unknown", "ok"]     # most urgent first in the overview list
+OVERVIEW_TITLE = "各筆引用一覽（依處理優先順序；點選可跳到說明）"
+BACK_LINK_TEXT = "← 再查一份書狀"
 
 # All user-facing wording lives here. Never use 「不存在」「偽造」「虛構」「錯誤引用」「建議引用」「應改引」.
 ZH = {
@@ -220,7 +228,8 @@ def month_range_note(months: list[str]) -> str:
     return f"{months[0]}–{months[-1]}（缺漏 {missing} 個月）"
 
 
-def render_html(report: Report, today: date | None = None) -> str:
+def render_html(report: Report, today: date | None = None, back_link: bool = False) -> str:
+    """back_link: show a link back to the form (only meaningful when served by `citecheck serve`)."""
     from jinja2 import Environment, PackageLoader, select_autoescape
 
     use_orig = bool(report.original_text)
@@ -243,6 +252,9 @@ def render_html(report: Report, today: date | None = None) -> str:
             row.update(law_name=c.law_name, article=c.article, paragraph=c.paragraph,
                        subparagraph=c.subparagraph, article_text=c.article_text,
                        law_url=c.law_url, article_url=c.article_url)
+            if c.is_continuation and c.law_name and c.article:   # "第5項" alone does not say which article
+                a, _, b = c.article.partition("-")
+                row["context"] = f"（{c.law_name}第{a}條{'之' + b if b else ''}）"
         elif row["kind"] == "JUDGMENT":
             row.update(court=c.court, year=c.year, case_word=c.case_word, case_no=c.case_no,
                        doc_kind=c.doc_kind, jid=c.jid, pdf_url=c.pdf_url, main_text=c.main_text,
@@ -270,7 +282,9 @@ def render_html(report: Report, today: date | None = None) -> str:
         stale=STALE_LAWS_LINE if age is not None and age > 90 else None,
         stats_line=stats_line(report.stats), law_link=LAW_LINK_TEXT, article_link=ARTICLE_LINK_TEXT,
         pdf_link=PDF_LINK_TEXT, versions="、".join(f"{k} {v}" for k, v in report.versions.items()),
-        model=report.llm_model or "未使用")
+        model=report.llm_model or "未使用", help=LEVEL_HELP, overview_title=OVERVIEW_TITLE,
+        overview=sorted(rows, key=lambda r: (LEVEL_ORDER.index(r["level"]), r["n"])),
+        back_link=BACK_LINK_TEXT if back_link else None)
 
 
 def write_html(report: Report, out_dir: Path) -> Path:

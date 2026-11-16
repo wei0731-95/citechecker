@@ -198,6 +198,9 @@ def _extract_judgments(text: str, lex: Lexicon, warnings: list[str]) -> list[Jud
 _ART = re.compile(r"第(\d+)條(?:之(\d+))?(?:第(\d+)項)?(?:第(\d+)款)?(?:前段|後段|但書)?")
 _SAME_ART = re.compile(r"同條(?:第(\d+)項)?(?:第(\d+)款)?(?:前段|後段|但書)?")
 _STAT_SEP = re.compile(r"(?:、|及|暨|與|或|至)\s*")
+# SPEC_V3 H5: "、第5項" / "及第11款" right after a citation that has a paragraph or subparagraph.
+_ITEM_CONT = re.compile(
+    r"(?:、|及|或|與|暨|至)\s*(?:第(\d+)項(?:第(\d+)款)?|第(\d+)款)(?:前段|後段|但書)?")
 
 
 def _art_key(m: re.Match) -> str:
@@ -231,6 +234,8 @@ def _extract_statutes(text: str, lex: Lexicon) -> list[StatuteCitation]:
     prev: StatuteCitation | None = None
     prev_end = -1
     for start, kind, m in cands:
+        if kind == "art" and start < prev_end:                   # H5: inside an item run already handled
+            continue
         if kind == "same":
             law = prev.law_name if prev else None
             art = prev.article if prev else None
@@ -284,6 +289,20 @@ def _extract_statutes(text: str, lex: Lexicon) -> list[StatuteCitation]:
                 subparagraph=_int(m.group(4)), status=status)
         out.append(c)
         prev, prev_end = c, m.end()
+        if c.paragraph is not None or c.subparagraph is not None:   # H5: 第N項、第M項 / 第N款、第M款
+            last, pos = c, m.end()
+            while (mm := _ITEM_CONT.match(text, pos)):
+                if mm.group(1):
+                    para, sub = int(mm.group(1)), _int(mm.group(2))
+                else:
+                    para, sub = last.paragraph, int(mm.group(3))
+                s0 = mm.start() + mm.group(0).index("第")
+                last = StatuteCitation(
+                    raw=text[s0:mm.end()], span=Span(start=s0, end=mm.end()), law_name=c.law_name,
+                    article=c.article, paragraph=para, subparagraph=sub, status=c.status, is_continuation=True)
+                out.append(last)
+                pos = mm.end()
+            prev, prev_end = last, pos
     return out
 
 
@@ -388,9 +407,12 @@ def extract_full(text: str, lex: Lexicon) -> ExtractResult:
     warnings: list[str] = []
     judgments = _extract_judgments(text, lex, warnings)
     statutes = _extract_statutes(text, lex)
+    others = _extract_other_authorities(text)
+    # H3: a 憲法法庭 judgment is reported once, as an other authority
+    judgments = [j for j in judgments
+                 if not any(a.span.start < j.span.end and j.span.start < a.span.end for a in others)]
     attach_claim_sentences(text, judgments)
     attach_statute_claims(text, statutes)
-    others = _extract_other_authorities(text)
     return ExtractResult(statutes, judgments, warnings, others, _find_unrecognized(text, judgments, others))
 
 

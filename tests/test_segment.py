@@ -121,3 +121,47 @@ def test_judgment_unmarked_first_paragraph_stays_unknown():
 def test_private_use_glyph_is_an_enumerator():
     reason = [s for s in segment(FAKE_RULING) if s.part == "reason"]
     assert reason[-1].marker == "據上論結" and reason[-1].text.startswith("\uf6ae")
+
+
+# ------------------------------------------------------------------ SPEC_V3 H1
+def _fake(reason_lines):
+    return ("最高法院民事判決\n115年度台上字第9號\n上  訴  人  甲\n    主  文\n上訴駁回。\n    理  由\n"
+            + "\n".join(reason_lines)
+            + "\n中　　華　　民　　國　　115 　年　　3 　　月　　31　　日\n")
+
+
+def reason_roles(text):
+    return [(s.text, s.role) for s in segment(text) if s.part == "reason"]
+
+
+H1_BASE = ["一、上訴人主張：甲。", "二、原審以：", "㈠查乙事實。", "㈡按丙見解。",
+           "㈢從而上訴人之請求為無理由等詞，為其判斷之基礎。"]
+
+
+def test_h1_lower_court_round_is_backfilled():
+    got = reason_roles(_fake(H1_BASE + ["三、按丁見解。"]))
+    assert len(got) == 6
+    assert [r for _, r in got[1:5]] == [R.LOWER_COURT] * 4
+    assert got[5][1] == R.SUPREME_COURT
+
+
+def test_h1_unmarked_paragraph_after_end_sentence_is_supreme_court():
+    got = reason_roles(_fake(H1_BASE + ["四、關於廢棄發回部分：", "戊見解。"]))
+    assert [t for t, _ in got[-2:]] == ["四、關於廢棄發回部分：", "戊見解。"]
+    assert [r for _, r in got[-2:]] == [R.SUPREME_COURT, R.SUPREME_COURT]
+
+
+def test_h1_split_at_mid_paragraph_end_sentence():
+    got = reason_roles(_fake(["二、原審以：乙見解等詞，為其判斷之基礎。惟按丙見解。"]))
+    assert got == [("二、原審以：乙見解等詞，為其判斷之基礎。", R.LOWER_COURT), ("惟按丙見解。", R.SUPREME_COURT)]
+
+
+def test_h1_two_rounds_do_not_backfill_across():
+    got = reason_roles(_fake(["二、原審以：甲等詞，為其判斷之基礎。", "三、按乙見解。",
+                              "四、原審就另一部分以：丙等詞，為其判斷之基礎。", "五、按丁見解。"]))
+    assert [r for _, r in got] == [R.LOWER_COURT, R.SUPREME_COURT, R.LOWER_COURT, R.SUPREME_COURT]
+
+
+def test_h1_end_sentence_without_lower_marker_changes_nothing_backwards():
+    got = reason_roles(_fake(["一、上訴人主張：甲。", "㈠乙事實。", "㈡從而丙等詞，為其判斷之基礎。", "三、丁見解。"]))
+    assert [r for _, r in got] == [R.PARTY_CLAIM, R.PARTY_CLAIM, R.PARTY_CLAIM, R.SUPREME_COURT]

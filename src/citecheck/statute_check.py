@@ -167,7 +167,8 @@ def apply_statute_l2(statutes: list[StatuteCitation], client, stats=None) -> Non
     """
     jobs: list[tuple[StatuteCitation, str]] = []
     for c in statutes:
-        if client is None or not eligible_for_l2(c):
+        # H5: a continuation ("、第5項") is not compared again; its run's first citation was
+        if client is None or c.is_continuation or not eligible_for_l2(c):
             c.l2_label, c.l2_confidence = StatuteL2Label.NOT_RUN, None
             continue
         text = c.article_text or ""

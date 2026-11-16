@@ -378,3 +378,54 @@
 - 沒有調整任何門檻、提示詞或規則。C5 通過，Phase C 的放行檢查完成。
 
 未做：`prep-samples` 仍未用真實 API 跑；Phase G 的 0.8 門檻未驗證。
+
+## SPEC_V3 Phase H
+
+### 1. 完成了什麼
+- H1（`segment.py`）：`_LOWER_END`／`_LOWER_END_MID` 兩個常數與三條規則（拆段、往後、往前回填）；`SEGMENT_RULES_VERSION` 1 → 2；`docs/SEGMENT_RULES.md` 新增第 7 節；重新產生 `docs/segment_samples/`、`docs/segment_samples_ruling/`（各 20 份；不在新摘要裡的舊樣本檔已刪除，因為現在的資料庫多了 202305，抽到的樣本不同）。
+- H2（`prep.py`、`judge.py`、`suggest.py`）：`current_model(client)`；`_current_ok(con, jid, model)` 多比對 `judgment_prep.model`；所有呼叫端傳入 `current_model(client)`。
+- H3（`extract.py`）：`extract_full` 移除與其他依據 `span` 重疊的判決引用，之後才附加主張句與找未辨識句子。
+- H4（`server.py`）：`MAX_BODY = 600_000`。
+- H5（`models.py`、`extract.py`、`statute_check.py`）：`StatuteCitation.is_continuation`；`_ITEM_CONT` 連續列舉；`_ART` 候選落在已處理範圍內時跳過；continuation 不呼叫 LLM。
+- 收尾：`build-index` 重建（見第 5 點）；H1 量測歸零；README 沒有指令變動、`DATA_SCHEMA.md` 沒有結構變動，都沒改。
+- 使用者另外要求「給使用者的介面要好用、一目瞭然」（不在 SPEC_V3 內）：
+  - 表單頁：分成「1 貼上書狀文字」「2 選擇查核範圍」兩步，加上使用說明，以及「報告怎麼看」的四個等級說明。
+  - 報告頁：摘要改成四個色塊，依「請確認、請留意、無法查核、查得到」排列，每塊附一句說明；摘要下新增「各筆引用一覽」，依處理優先順序排列，點選可跳到明細；明細卡片左側加等級色條；書狀原文的文字標籤改成行內標籤；連續列舉的「第5項」後面補上「（民法第195條）」；網頁版報告頂端加「← 再查一份書狀」連結；加上列印樣式。
+  - 這些都只動版面與 CSS。表單頁的 JavaScript 仍只有原本那一段，報告頁沒有 JavaScript，也不載入外部資源。SPEC_V2 規定逐字使用的文字都沒改。
+
+### 2. 我做的解讀
+1. H2：`plan_prep` 多一個 `model` 參數；`_write` 改為直接收 `model`，由 `store_prep` 用 `current_model(client)` 取得。這樣「沒有本院段落、直接記為 ok」的那筆紀錄也會寫入目前的模型，否則換模型後每次都會重寫。
+2. H3：`_extract_judgments` 產生的警告不隨之移除（規格只說移除判決引用）。
+3. H5：continuation 的 `raw` 從「第」開始，不含前面的「、」「及」等連接詞（依規格）；第 4 點的保險只套用在 `_ART` 候選，不套用在「同條」。
+4. 介面新增的文字（`report.py` 的 `LEVEL_HELP`、`OVERVIEW_TITLE`、`BACK_LINK_TEXT`；`server.py` 的 `TEXT_HINT`、`L2_HINT`、`LEGEND_TITLE`）不在 SPEC_V2 §11 裡，是依使用者要求加的。已確認不含 §11 禁用的詞。`render_html` 多了 `back_link` 參數，預設不顯示，所以 `check` 指令輸出的靜態報告不受影響。
+5. 摘要四個等級的排列由「查得到、請確認、請留意、無法查核」改成「請確認、請留意、無法查核、查得到」；§11.5 只規定要有四個等級的筆數，沒有規定順序。
+
+### 3. 被調整預期值的既有測試
+| 測試 | 原預期 | 新預期 | 對應 |
+|---|---|---|---|
+| `test_server.py::test_oversized_or_missing_content_length_is_413_without_reading_the_body` | `Content-Length: 400001` → 413 | `600001` → 413 | H4 |
+| `test_server.py::test_very_long_cjk_text_hits_the_body_limit_first`（改名為 `test_h4_50000_cjk_characters_fit_under_the_body_limit`） | 45,000 個中文字 → 413；40,000 個 → 200 | 50,000 個中文字 → 報告；50,001 個 → 表單與「文字超過 50,000 字，請分段查核。」；600,001 位元組 → 413 | H4 |
+
+切段的既有測試都不需要調整。
+
+### 4. pytest
+332 項通過（Phase H 之前 310 項）。新增：H1 5 項（`test_segment.py`）、H2 2 項（`test_phase_f.py`）、H3 1 項與 H5 6 項（`test_extract.py`）、H5 2 項（`test_statute_check.py`）、介面 6 項（`test_display.py` 4 項、`test_server.py` 2 項）；H4 取代 1 項。
+
+### 5. 評測數字（AI 標註，未經人工複核；`--no-l2`，不呼叫 API）
+「之前」是用 Phase H 之前的程式碼（HEAD `302f28e`）對重建前的索引跑的。
+
+| 指標 | v1 之前 → 之後 | v2 之前 → 之後 |
+|---|---|---|
+| 抽取召回率 | 42/42 → 42/42 | 91/91 → 91/91 |
+| L1 正確率 | 39/42 → 39/42 | 84/84 → 84/84（略過 7 筆：年度未涵蓋） |
+| eval-retrieval 前 1／3／5／10 名 | 17／22／23／23 → 相同 | 30／31／31／32 → 相同 |
+| eval-suggest 前 5／20 名 | 10／10 → 相同 | 15／15 → 相同 |
+
+- v1 的 3 筆 L1 錯誤在 Phase H 之前就有：F01、F02、F03 的金標是 `NOT_FOUND_IN_SCOPE`，系統輸出 `DATA_NOT_COVERED`。原因是 115 年度缺 2026 年 1 月，還不算完整涵蓋（SPEC_V3 §3）。
+- `build-index`（版本 1 → 2）：3,030 份全部重建，耗時 19.8 秒（含 Docker 啟動）。段落 22,120 → 22,129；passages 21,813 → 21,815；全文索引段落 4,680 → 4,729；`quoted_sentences` 351 → 0、`judgment_prep` 92 → 0（依規格清空，下次用到時重新整理）。
+- 收尾第 3 點的量測（所有判決中，原審理由範圍內角色卻不是 LOWER_COURT 的段數）：33 段（11 份判決）→ **0 段**。
+- C04（115 年度台上字第 114 號）：被當成證據的第 8 段（「…等詞，為其判斷之基礎。」）現在是 LOWER_COURT；之前第 5–8 段（㈠查…到㈣審酌…）都被切成 SUPREME_COURT，現在全部是 LOWER_COURT。實際的 L2 標籤要等 Phase V 用 API 驗證。
+
+### 6. 沒做或沒驗證的事
+- 所有需要 API 的驗證（L2、轉述句重新整理）都留給 Phase V。
+- 介面只在本機 Docker 用瀏覽器看過深色與淺色模式；手機寬度只靠 CSS 斷點，沒有實機測試。

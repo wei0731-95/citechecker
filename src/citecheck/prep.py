@@ -76,15 +76,22 @@ class PrepPlan:
     batches: list[list[tuple[int, int, int, str]]]
 
 
-def _current_ok(con: sqlite3.Connection, jid: str) -> bool:
-    row = con.execute("SELECT status, prompt_version, segment_rules_version FROM judgment_prep WHERE jid=?",
+def current_model(client) -> str | None:
+    """Model name recorded with a preparation (SPEC_V3 H2)."""
+    return os.environ.get("CITECHECK_MODEL") or getattr(client, "model", None)
+
+
+def _current_ok(con: sqlite3.Connection, jid: str, model: str | None) -> bool:
+    """Prepared successfully with the current prompt, segmentation rules and model (None == None counts)."""
+    row = con.execute("SELECT status, prompt_version, segment_rules_version, model FROM judgment_prep WHERE jid=?",
                       (jid,)).fetchone()
-    return bool(row) and row[0] == "ok" and row[1] == PREP_PROMPT_VERSION and row[2] == SEGMENT_RULES_VERSION
+    return (bool(row) and row[0] == "ok" and row[1] == PREP_PROMPT_VERSION and row[2] == SEGMENT_RULES_VERSION
+            and row[3] == model)
 
 
-def plan_prep(con: sqlite3.Connection, jid: str) -> PrepPlan | None:
+def plan_prep(con: sqlite3.Connection, jid: str, model: str | None) -> PrepPlan | None:
     """None when nothing needs to be done (already prepared, or no 本院 passage -> recorded as ok)."""
-    if _current_ok(con, jid):
+    if _current_ok(con, jid, model):
         return None
     rows = con.execute("SELECT seq, text FROM passages WHERE jid=? AND role='SUPREME_COURT' ORDER BY seq",
                        (jid,)).fetchall()
@@ -108,7 +115,7 @@ def plan_prep(con: sqlite3.Connection, jid: str) -> PrepPlan | None:
     if cur:
         batches.append(cur)
     if not sents:
-        _write(con, jid, [], "ok")
+        _write(con, jid, [], "ok", model)
         return None
     return PrepPlan(jid, sents, batches)
 
@@ -137,8 +144,7 @@ def call_prep(client, plan: PrepPlan) -> list[tuple[int, str]] | None:
 
 
 def _write(con: sqlite3.Connection, jid: str, quoted: list[tuple[int, int, str]], status: str,
-           client=None) -> None:
-    model = os.environ.get("CITECHECK_MODEL") or getattr(client, "model", None)
+           model: str | None) -> None:
     con.execute("DELETE FROM quoted_sentences WHERE jid=?", (jid,)) if status == "ok" else None
     con.executemany("INSERT INTO quoted_sentences(jid, passage_seq, sent_idx, speaker) VALUES(?,?,?,?)",
                     [(jid, seq, k, sp) for seq, k, sp in quoted])
@@ -150,17 +156,18 @@ def _write(con: sqlite3.Connection, jid: str, quoted: list[tuple[int, int, str]]
 
 
 def store_prep(con: sqlite3.Connection, plan: PrepPlan, result: list[tuple[int, str]] | None, client=None) -> bool:
+    model = current_model(client)
     if result is None:
-        _write(con, plan.jid, [], "failed", client)
+        _write(con, plan.jid, [], "failed", model)
         return False
     pos = {s[0]: (s[1], s[2]) for s in plan.sentences}
-    _write(con, plan.jid, [(*pos[i], sp) for i, sp in result], "ok", client)
+    _write(con, plan.jid, [(*pos[i], sp) for i, sp in result], "ok", model)
     return True
 
 
 def ensure_prepared(jid: str, con: sqlite3.Connection, client) -> bool:
     """True when the judgment's quoted sentences are available (already stored, or just created)."""
-    plan = plan_prep(con, jid)
+    plan = plan_prep(con, jid, current_model(client))
     if plan is None:
         return True
     return store_prep(con, plan, call_prep(client, plan), client)
