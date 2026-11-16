@@ -341,3 +341,27 @@
 ### 6. 沒做或沒驗證的事
 - G2 對真實模型沒有試過（沒有跑含 L2 的完整流程）；SUGGEST_THRESHOLD 0.8 是否合適未知。
 - 相近裁判區塊在瀏覽器上的實際外觀沒有重看（模板 Phase D 已有）。
+
+## 本地模型試跑（非 SPEC_V2 的 Phase；2026-11 補記）
+
+### 做了什麼
+- `llm.py` 新增兩個環境變數：`CITECHECK_OPENAI_BASE_URL`（相容 OpenAI 的伺服器完整網址，預設仍是 OpenAI；從 Docker 連本機 Ollama 用 `http://host.docker.internal:11434/v1/chat/completions`）、`CITECHECK_TIMEOUT`（單次請求秒數，預設 60）。程式不新增依賴，連線仍只發生在 LLM 呼叫。
+- 用 Ollama 的 `qwen2.5:14b`（約 9 GB，使用者同意下載）跑 `eval/testset_v2.jsonl` 含 L2；結果在 `eval/results_local/`。指令：`CITECHECK_PROVIDER=openai CITECHECK_MODEL=qwen2.5:14b OPENAI_API_KEY=local CITECHECK_REASONING_EFFORT=off CITECHECK_TIMEOUT=300 CITECHECK_OPENAI_BASE_URL=... citecheck eval eval/testset_v2.jsonl --out eval/results_local`。
+
+### 結果（AI 標註，未經人工複核；本地模型，不是正式 C5）
+綠色精確率 13/16＝81.2%；金標為 LOWER_COURT_VIEW 卻輸出 COURT_HOLDING 的有 2 題（C04、C06）。兩個 C5 條件都不符。逐題標籤正確率 29/36，L2 問題偵測召回 18/21，誤報 2/15，法條不符偵測 7/8、法條誤報 0/13，沒有 UNCERTAIN，沒有格式失敗。**沒有調整任何門檻、提示詞或規則。**
+
+### 答錯的綠色
+| 題號 | 金標→系統 | 主張句（摘要） | 被當成證據的段落 | `quoted_sentences` 標註 | 判斷的錯誤原因 |
+|---|---|---|---|---|---|
+| C04 | LOWER_COURT_VIEW→COURT_HOLDING（0.9） | 無權占用山坡地，不當得利以申報地價年息 3% 計算 | 第 8 段（切成本院）：「…上訴人占用系爭土地所受利益，應以土地申報地價年息3%計算為適當…等詞，為其判斷之基礎。」 | 該段沒有任何句子被標為轉述 | 切段（原審理由的轉述被切成本院）＋F2 漏標（最後一句「…等詞，為其判斷之基礎」明顯是在轉述原判決） |
+| C06 | LOWER_COURT_VIEW→COURT_HOLDING（0.8） | 買受人購買廠房作重型機車銷售工廠，出賣人應交付與契約相符的標的 | 第 6 段（本院，起首標記「按」）：「則以占用鄰地之圍牆、鐵棚等系爭增建…被上訴人簽訂系爭買賣契約，目的在購買重型機車銷售工廠…顯有疑義，應詳予究明。」 | 該段沒有任何句子被標為轉述 | 比對用 LLM 判錯（段落是本院對事實的質疑，沒有表達主張句的見解）＋切段／F2 漏標（開頭「則以…」是原審見解的延續） |
+| D05 | CONTRADICTED→COURT_HOLDING（0.9） | 給付不能可歸責於債權人時，債務人不得請求對待給付 | 第 6 段（本院，「按」）：「當事人之一方因可歸責於他方之事由，致不能給付者，得請求對待給付…」（民法第 267 條） | 該段沒有被標為轉述（同判決其他段落有 LOWER_COURT／PARTY 標記） | 比對用 LLM 判錯（段落意思與主張句相反，卻判成 SUPPORTS） |
+
+### 沒做
+- 這不是正式的 C5：C5 要求用指定的真實 API。Phase C 的 C5 結果仍是「未通過、未用正式 API 重跑」。
+- `prep-samples`、單獨的法條 L2 沒有另外跑（法條 L2 已包含在上面的整體評測）。
+- 切段修正（弱標記不在下級法院或當事人子段落內切換角色）沒有做，因為不在 SPEC_V2 範圍，使用者要求先不處理；C04、C06 與此有關。
+
+## 其他
+- `citecheck stats` 在法規資料超過 90 天沒更新時顯示提醒（SPEC_V2 §11.5，Phase D 當時未做）。

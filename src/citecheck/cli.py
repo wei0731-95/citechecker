@@ -60,6 +60,10 @@ def stats():
         return con.execute(sql).fetchone()[0]
 
     meta = dict(con.execute("SELECT key, value FROM meta").fetchall())
+    from .report import STALE_LAWS_LINE, laws_age_days
+    age = laws_age_days(meta.get("laws_update_date"))
+    if age is not None and age > 90:
+        typer.echo(f"提醒：{STALE_LAWS_LINE}（距上次更新 {age} 天）")
     typer.echo(f"法規數（現行）: {q('SELECT COUNT(*) FROM laws WHERE repealed=0')}")
     typer.echo(f"法規數（已廢止）: {q('SELECT COUNT(*) FROM laws WHERE repealed=1')}")
     typer.echo(f"條文數: {q('SELECT COUNT(*) FROM articles')}")
