@@ -112,11 +112,21 @@ def eval_cmd(
     write_results(metrics, errors, out)
     fmt = lambda m: "-" if m["rate"] is None else f"{m['rate']:.1%} ({m['num']}/{m['den']})"
     typer.echo(f"抽取召回率：{fmt(metrics['extraction_recall'])}")
-    typer.echo(f"L1 正確率：{fmt(metrics['l1_accuracy'])}")
+    typer.echo(f"L1 正確率：{fmt(metrics['l1_accuracy'])}（略過 {metrics['skipped_not_covered']} 筆：年度未涵蓋）")
+    for label, key in (("尚未施行標記符合", "not_in_force_match"), ("其他依據抽取符合", "other_authorities_match"),
+                       ("未辨識句子符合", "unrecognized_match")):
+        if metrics[key]["den"]:
+            typer.echo(f"{label}：{fmt(metrics[key])}")
     if metrics["l2"]:
         typer.echo(f"L2 問題偵測召回率：{fmt(metrics['l2']['problem_detection_recall'])}")
         typer.echo(f"L2 誤報率：{fmt(metrics['l2']['false_alarm_rate'])}")
         typer.echo(f"L2 不確定率：{fmt(metrics['l2']['uncertain_rate'])}")
+        typer.echo(f"綠色精確率：{fmt(metrics['l2']['green_precision'])}（AI 標註，未經人工複核）")
+        typer.echo(f"有效判斷率：{fmt(metrics['l2']['valid_judgment_rate'])}")
+        typer.echo(f"逐題標籤正確率：{fmt(metrics['l2']['label_accuracy'])}")
+        if metrics["statute_l2"]:
+            typer.echo(f"法條不符偵測率：{fmt(metrics['statute_l2']['mismatch_detection_rate'])}")
+            typer.echo(f"法條誤報率：{fmt(metrics['statute_l2']['false_alarm_rate'])}")
     typer.echo(f"錯誤 {len(errors)} 筆，已輸出至 {out}")
 
 

@@ -146,3 +146,33 @@
 - A12／A13 的規則只用單元測試驗證。
 - HTML 報告改顯示原文後，只有單元測試涵蓋（沒有開瀏覽器檢查版面）。
 - §11 的四等級顯示、`level_of`、頁首聲明等尚未實作（後面的 Phase）。
+
+## SPEC_V2 Phase T
+
+### 1. 完成了什麼（對應 SPEC_V2 §5）
+- T1–T4：`eval/build_testset_v2.py` 產出 `eval/testset_v2.jsonl`（94 題，15 題 Markdown 樣式），自動驗證全部通過。
+- T5：36 題由 36 個子代理各自獨立第二次標註；初次一致 35/36（97.2%），唯一不一致 B06 已重讀定案並記錄。`eval/apply_second_annotation.py` 負責合併。詳見 `docs/TESTSET_STATUS.md`。
+- T6：`evaluate.py` 支援 `requires_covered_year`（`skipped_not_covered`）、`gold_statute_l2`（法條不符偵測率、誤報率、混淆矩陣）、`gold_not_in_force`／`gold_other_authorities`／`gold_unrecognized`（符合／總數）、綠色精確率、有效判斷率、逐題標籤正確率；`errors.csv` 增加 `STATUTE_L2_MISMATCH`；`citecheck eval` 同時印出這些指標。
+- B1 的 `parse_article`（`src/citecheck/statute_check.py`，附 9 個測試）先於 Phase T 實作；對本機資料庫的民法 1,374 條現行條文全部可解析、0 條回傳 None（用一次性腳本檢查，沒有寫成讀取 `data/citecheck.db` 的測試）。
+
+### 2. 我做的解讀
+1. 題目的 `id` 沿用「類別代碼＋兩位流水號」，因此 S1–S11 的 id 是 `S101…`、`S601` 這樣（類別為 `S6` 時流水號接在後面）。
+2. 帶 Markdown 的 15 題：A 2、B 1、C 1、D 1、E 1、F1 1、S1 2、S2 1、S3 1、S6 1、S7 1、G 1、其他依據 1；樣式輪流用 `**粗體**`、行首 `- `、行首 `> `。
+3. 「重新讀全文後定案」的金標改動只發生在 B06（見 TESTSET_STATUS）；所有金標都在跑系統之前定案。
+4. 子代理傳題方式：每題的提示詞寫成 `out/t5/<題號>.txt`（不含金標、gold_passage、note），請子代理只讀那一個檔案；規格要求「給它」這些資料，我認為檔案傳遞等價，但獨立性靠指示。
+5. 決議字號（68 年度第 13 次民事庭會議決議(一)）沒有在資料裡找到可驗證的真實案例；該題不描述決議內容，只測試抽取。判例字號同理（G 類第 3 題）。
+
+### 3. 被調整預期值的既有測試
+無（Phase T 只新增測試）。
+
+### 4. pytest
+149 項通過（Phase A 結束時 136 項）。
+
+### 5. 評測數字（AI 標註，未經人工複核；沒有 API 金鑰，全部 `--no-l2`）
+- `eval/testset.jsonl`（v1）：Phase T 之前 → 之後：抽取 42/42 → 42/42；L1 39/42 → 39/42（沒有變化）。
+- `eval/testset_v2.jsonl`（新）：Phase T 之前沒有 → 之後：抽取 91/91；L1 75/84（略過 7 筆年度未涵蓋）；錯誤 9 筆 = S6 5 題、S7 4 題，原因：Phase B 才會實作項、款檢查。
+
+### 6. 沒做或沒驗證的事
+- 沒有跑 L2（沒有 API 金鑰）；`citecheck eval` 的 L2 與法條 L2 指標只用單元測試驗證。
+- 第二次標註的獨立性（見解讀 4）；判例、決議字號沒有對照官方來源。
+- 第二次標註只涵蓋 36 題（A–E、I）；其餘題目金標由資料庫或字號事實決定。
