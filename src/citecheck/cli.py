@@ -5,6 +5,7 @@ import typer
 from .db import DEFAULT_DB, connect
 from .ingest_judgments import ingest_judgments as _ij
 from .ingest_laws import ingest_laws as _il
+from .verify import covered_years, imported_months
 
 app = typer.Typer(help="書狀引用查核器")
 
@@ -27,12 +28,27 @@ def stats():
         return con.execute(sql).fetchone()[0]
 
     meta = dict(con.execute("SELECT key, value FROM meta").fetchall())
-    typer.echo(f"法規數: {q('SELECT COUNT(*) FROM laws')}")
+    typer.echo(f"法規數（現行）: {q('SELECT COUNT(*) FROM laws WHERE repealed=0')}")
+    typer.echo(f"法規數（已廢止）: {q('SELECT COUNT(*) FROM laws WHERE repealed=1')}")
     typer.echo(f"條文數: {q('SELECT COUNT(*) FROM articles')}")
     typer.echo(f"判決數: {q('SELECT COUNT(*) FROM judgments')}")
     typer.echo(f"法規資料日期: {meta.get('laws_update_date', '-')}")
     typer.echo(f"案號年度範圍: {meta.get('year_min', '-')} ~ {meta.get('year_max', '-')}")
     typer.echo(f"裁判日期範圍: {meta.get('date_min', '-')} ~ {meta.get('date_max', '-')}")
+    months = imported_months(con)
+    typer.echo(f"已匯入月份: {', '.join(months) if months else '-'}")
+    if months:
+        lo, hi = int(months[0][:4]) * 12 + int(months[0][4:]) - 1, int(months[-1][:4]) * 12 + int(months[-1][4:]) - 1
+        have = set(months)
+        missing = [f"{i // 12:04d}{i % 12 + 1:02d}" for i in range(lo, hi + 1)
+                   if f"{i // 12:04d}{i % 12 + 1:02d}" not in have]
+        typer.echo(f"缺漏月份（最早到最晚之間）: {', '.join(missing) if missing else '無'}")
+        counts = dict(con.execute("SELECT month, COUNT(*) FROM judgments GROUP BY month").fetchall())
+        vals = sorted(counts.values())
+        median = (vals[len(vals) // 2] if len(vals) % 2 else (vals[len(vals) // 2 - 1] + vals[len(vals) // 2]) / 2)
+        low = [m for m in months if counts.get(m, 0) < median / 2]
+        typer.echo(f"裁判筆數低於各月中位數一半的月份: {', '.join(low) if low else '無'}")
+    typer.echo(f"已涵蓋的案號年度: {', '.join(str(y) for y in sorted(covered_years(months))) or '無'}")
 
 
 @app.command()

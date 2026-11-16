@@ -16,29 +16,31 @@ FIXTURE = Path(__file__).parent / "fixtures" / "fake_testset.jsonl"
 def con():
     c = sqlite3.connect(":memory:")
     c.executescript(SCHEMA)
-    c.execute("INSERT INTO laws VALUES('假法','20250101')")
+    c.execute("INSERT INTO laws(law_name, modified_date) VALUES('假法','20250101')")
     c.executemany("INSERT INTO articles VALUES('假法',?,?)", [("1", "fake 條文"), ("2", "（刪除）")])
-    c.execute("INSERT INTO judgments VALUES('TPSV,115,台上,7,20260101,1',115,'台上',7,'判決','20260101','fake','fake')")
+    c.execute("INSERT INTO judgments(jid, year, case_word, case_no, doc_kind, date, title, full_text, month) "
+              "VALUES('TPSV,115,台上,7,20260101,1',115,'台上',7,'判決','20260101','fake','fake','202601')")
     set_meta(c, "year_min", "110")
     set_meta(c, "year_max", "115")
+    set_meta(c, "months_imported", '["202601", "202602"]')
     return c
 
 
 def test_eval_no_l2_matches_hand_computation(con, tmp_path):
     lex = Lexicon({"假法": "假法"}, {}, {"台上"})
     metrics, errors = evaluate(load_testset(FIXTURE), con, lex, client=None)
-    # hand count: 7 gold citations; 6 matched (fake_E01 has no court name -> not extracted);
-    # of the 6 matched, only fake_D01 has a wrong L1 status (民法 is not in this lexicon).
-    assert metrics["n_gold_citations"] == 7 and metrics["n_matched"] == 6
-    assert metrics["extraction_recall"] == {"num": 6, "den": 7, "rate": pytest.approx(6 / 7)}
-    assert metrics["l1_accuracy"] == {"num": 5, "den": 6, "rate": pytest.approx(5 / 6)}
+    # hand count: 7 gold citations; all 7 matched (SPEC_V2 A6: fake_E01 has no court name, but the
+    # case word 台上 is a Supreme Court civil one, so the court is inferred and the citation extracted);
+    # of the 7 matched, only fake_D01 has a wrong L1 status (民法 is not in this lexicon).
+    assert metrics["n_gold_citations"] == 7 and metrics["n_matched"] == 7
+    assert metrics["extraction_recall"] == {"num": 7, "den": 7, "rate": 1.0}
+    assert metrics["l1_accuracy"] == {"num": 6, "den": 7, "rate": pytest.approx(6 / 7)}
     assert metrics["l2"] is None
-    assert sorted((e["item_id"], e["error_type"]) for e in errors) == [
-        ("fake_D01", "L1_MISMATCH"), ("fake_E01", "EXTRACTION_MISS")]
+    assert sorted((e["item_id"], e["error_type"]) for e in errors) == [("fake_D01", "L1_MISMATCH")]
     write_results(metrics, errors, tmp_path)
-    assert json.loads((tmp_path / "metrics.json").read_text(encoding="utf-8"))["n_matched"] == 6
+    assert json.loads((tmp_path / "metrics.json").read_text(encoding="utf-8"))["n_matched"] == 7
     rows = list(csv.DictReader(open(tmp_path / "errors.csv", encoding="utf-8-sig")))
-    assert len(rows) == 2 and {"item_id", "raw", "error_type", "gold", "system", "cause"} <= set(rows[0])
+    assert len(rows) == 1 and {"item_id", "raw", "error_type", "gold", "system", "cause"} <= set(rows[0])
 
 
 def test_l2_metrics_hand_computation():

@@ -3,10 +3,10 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
-from .extract import Lexicon, extract_all
-from .models import DataCoverage, JudgmentCitation, L2Label, Report
-from .normalize import normalize
-from .verify import verify_judgment, verify_statute
+from .extract import Lexicon, extract_full
+from .models import DataCoverage, JudgmentCitation, L2Label, Report, Span
+from .normalize import normalize_with_map
+from .verify import ARTICLE_URL, covered_years, imported_months, verify_judgment, verify_statute  # noqa: F401
 
 
 def read_brief(path: Path) -> str:
@@ -33,14 +33,23 @@ def data_coverage(con: sqlite3.Connection) -> DataCoverage:
         judgment_date_min=meta.get("date_min") or None,
         judgment_date_max=meta.get("date_max") or None,
         judgment_count=con.execute("SELECT COUNT(*) FROM judgments").fetchone()[0],
+        months_imported=imported_months(con),
+        covered_years=sorted(covered_years(imported_months(con))),
     )
 
 
 def build_report(raw_text: str, input_file: str, con: sqlite3.Connection, lex: Lexicon,
                  client=None) -> Report:
     """client=None -> L1 only (every l2_label is NOT_RUN)."""
-    text = normalize(raw_text)
-    statutes, judgments, warnings = extract_all(text, lex)
+    text, ranges = normalize_with_map(raw_text)
+    ex = extract_full(text, lex)
+    statutes, judgments, warnings = ex.statutes, ex.judgments, ex.warnings
+
+    def orig(span: Span) -> Span:
+        return Span(start=ranges[span.start][0], end=ranges[span.end - 1][1])
+
+    for c in (*statutes, *judgments, *ex.other_authorities, *ex.unrecognized):
+        c.original_span = orig(c.span)
     statutes = [verify_statute(s, con) for s in statutes]
     judgments = [verify_judgment(j, con, lex) for j in judgments]
     if client is None:
@@ -51,7 +60,8 @@ def build_report(raw_text: str, input_file: str, con: sqlite3.Connection, lex: L
         apply_l2(judgments, con, client)
     return Report(input_file=input_file, generated_at=datetime.now().astimezone().isoformat(),
                   data_coverage=data_coverage(con), normalized_text=text,
-                  statutes=statutes, judgments=judgments, warnings=warnings)
+                  statutes=statutes, judgments=judgments, warnings=warnings, original_text=raw_text,
+                  other_authorities=ex.other_authorities, unrecognized=ex.unrecognized)
 
 
 def write_json(report: Report, out_dir: Path) -> Path:
@@ -72,13 +82,19 @@ ZH = {
         "LAW_NOT_FOUND": "查無此法規名稱",
         "ARTICLE_NOT_FOUND": "法規可查得，但查無此條",
         "ARTICLE_DELETED": "該條文現行內容為「（刪除）」",
-        "UNRESOLVED_REF": "無法承接前文之法規名稱，無法查核",
+        "UNRESOLVED_REF": "這裡只寫了條號，看不出是哪一部法規。",
+        "LAW_NAME_UNCERTAIN": "無法確認書狀指的是哪一部法規，請核對法規全名。",
+        "LAW_OUT_OF_SCOPE": "本工具未收錄行政命令與地方法規（施行細則、辦法、自治條例等），無法查核。",
+        "LAW_REPEALED": "這部法規已經廢止。",
+        "PARAGRAPH_NOT_FOUND": "這一條存在，但沒有書狀所寫的這一項。",
+        "SUBPARAGRAPH_NOT_FOUND": "這一項存在，但沒有書狀所寫的這一款。",
     },
     "JUDGMENT": {
         "FOUND": "查得該裁判",
         "NOT_FOUND_IN_SCOPE": "查無公開裁判",
         "OUT_OF_SCOPE": "非最高法院民事裁判，無法查核",
         "AMBIGUOUS": "同字號對到多筆裁判，無法確定",
+        "NOT_FOUND_CIVIL_ONLY": "在最高法院民事裁判中查不到這個字號。書狀沒有寫明是民事或刑事；如果是刑事裁判，本工具無法查核。",
         "DATA_NOT_COVERED": "年度不在已匯入資料範圍，無法查核",
     },
     "L2": {
@@ -97,8 +113,10 @@ ZH = {
     "RELATION": {"SUPPORTS": "相符", "CONTRADICTS": "相反", "UNRELATED": "無關"},
 }
 
-_RED = {"NOT_FOUND_IN_SCOPE", "LAW_NOT_FOUND", "ARTICLE_NOT_FOUND", "CONTRADICTED"}
-_ORANGE = {"PARTY_ARGUMENT", "LOWER_COURT_VIEW", "ARTICLE_DELETED", "AMBIGUOUS"}
+_RED = {"NOT_FOUND_IN_SCOPE", "LAW_NOT_FOUND", "ARTICLE_NOT_FOUND", "CONTRADICTED",
+        "PARAGRAPH_NOT_FOUND", "SUBPARAGRAPH_NOT_FOUND"}
+_ORANGE = {"PARTY_ARGUMENT", "LOWER_COURT_VIEW", "ARTICLE_DELETED", "AMBIGUOUS",
+           "LAW_REPEALED", "NOT_FOUND_CIVIL_ONLY"}
 
 
 def color_of(c) -> str:
@@ -124,9 +142,14 @@ def render_html(report: Report) -> str:
 
     from jinja2 import Environment, PackageLoader, select_autoescape
 
-    items = sorted([*report.statutes, *report.judgments], key=lambda c: (c.span.start, c.span.end))
+    use_orig = bool(report.original_text)
+    text = report.original_text if use_orig else report.normalized_text
+
+    def sp(c):
+        return c.original_span if (use_orig and c.original_span) else c.span
+
+    items = sorted([*report.statutes, *report.judgments], key=lambda c: (sp(c).start, sp(c).end))
     cites, pieces, pos = [], [], 0
-    text = report.normalized_text
     for n, c in enumerate(items, 1):
         row = {"n": n, "kind": c.type, "raw": c.raw, "cls": color_of(c),
                "status_zh": ZH[c.type][c.status.value], "l2_zh": None, "l2_cls": "gray"}
@@ -144,10 +167,11 @@ def render_html(report: Report) -> str:
                 row["evidence_role_zh"] = ZH["ROLE"][c.l2_evidence.segment_role.value]
                 row["evidence_relation_zh"] = ZH["RELATION"][c.l2_evidence.relation.value]
         cites.append(row)
-        if c.span.start >= pos:  # overlapping spans stay listed in the details but are not re-highlighted
-            pieces.append({"text": text[pos:c.span.start], "cls": None, "n": n})
-            pieces.append({"text": text[c.span.start:c.span.end], "cls": row["cls"], "n": n})
-            pos = c.span.end
+        start, end = max(sp(c).start, pos), sp(c).end  # an overlapping span starts where the previous ended
+        if end > start:
+            pieces.append({"text": text[pos:start], "cls": None, "n": n})
+            pieces.append({"text": text[start:end], "cls": row["cls"], "n": n})
+            pos = end
     pieces.append({"text": text[pos:], "cls": None, "n": 0})
 
     counts = Counter()

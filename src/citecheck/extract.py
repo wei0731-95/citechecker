@@ -1,15 +1,54 @@
-"""Citation extraction (SPEC 6). Input text must already be normalize()d."""
+"""Citation extraction (SPEC 6, SPEC_V2 A1-A6, A12, A13). Input text must already be normalize()d."""
 import json
 import re
 import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .models import (JudgmentCitation, JudgmentStatus, Span, StatuteCitation,
-                     StatuteStatus)
+from .models import (JudgmentCitation, JudgmentStatus, OtherAuthority, Span, StatuteCitation,
+                     StatuteStatus, UnrecognizedSentence)
 from .normalize import normalize
 
 SUPREME = "最高法院"
+
+# A1: characters / words that may legitimately stand directly before a law name.
+LAW_PREFIX_SINGLE = set("依按有觀以及於無與為逾又屬前之非查而或且另惟但故至係在就因何犯指見暨如即並對和跟則均亦仍應得可")
+LAW_PREFIX_WORDS = [
+    "適用", "準用", "援用", "引用", "類推", "違反", "違背", "有違", "無違", "未違", "牴觸",
+    "參照", "依照", "按照", "依據", "根據", "引據", "基於", "依循", "參酌", "參考", "參見", "詳見",
+    "觀諸", "揆諸", "參諸", "審諸", "符合", "不符", "合於", "不合", "構成", "成立", "該當",
+    "觸犯", "涉犯", "另涉", "無涉", "行使", "踐行", "主張", "所指", "援引", "追加",
+    "修正", "公布", "增訂", "施行", "現行", "當時", "我國", "上述", "上開", "前開",
+    "應負", "應受", "不受", "具備", "不備", "不生", "未達", "已達", "超過", "有關", "攸關", "認為",
+]
+
+# A2: what stands before "第N條" when no law name matched.
+NON_STATUTE_SUFFIXES = ["契約", "合約", "契約書", "合約書", "協議", "協議書", "規約", "章程", "公約",
+                        "條款", "約款", "保單", "要點", "須知", "規章", "工作規則", "約定", "合意",
+                        "租約", "和解書", "切結書", "同意書"]
+BACKREF_SUFFIXES = ["本法", "該法", "同法", "前法", "新法", "舊法", "母法", "上開法", "前開法", "前揭法", "各該法",
+                    "本條例", "該條例", "同條例", "系爭條例",
+                    "本辦法", "該辦法", "系爭辦法", "本規則", "該規則", "系爭規則", "本細則"]
+ORDER_SUFFIXES = ["施行細則", "細則", "規則", "辦法", "準則", "標準", "規程", "綱要", "自治條例"]
+
+_CJK = ("一", "鿿")
+
+
+def _is_cjk(ch: str) -> bool:
+    return _CJK[0] <= ch <= _CJK[1]
+
+
+def boundary_ok(pre: str) -> bool:
+    """A1: may a law name directly follow `pre`?"""
+    pre = pre.rstrip()
+    if not pre:
+        return True
+    ch = pre[-1]
+    if not _is_cjk(ch):
+        return True
+    if ch in LAW_PREFIX_SINGLE:
+        return True
+    return any(pre.endswith(w) for w in LAW_PREFIX_WORDS)
 
 
 @dataclass
@@ -25,7 +64,7 @@ class Lexicon:
         self._maxlen = max((len(k) for k in self._lookup), default=0)
 
     def law_suffix(self, window: str):
-        """Longest law name / alias that is a suffix of window -> (official, length)."""
+        """Longest law name / alias that is a suffix of window -> (official, length, start index)."""
         window = window.rstrip()
         for n in range(min(self._maxlen, len(window)), 0, -1):
             hit = self._lookup.get(window[-n:])
@@ -33,8 +72,17 @@ class Lexicon:
                 return hit, n, len(window) - n
         return None
 
+    def first_name_start(self, s: str) -> int | None:
+        """Leftmost index in s where a known law name / alias begins."""
+        for i in range(len(s)):
+            for n in range(min(self._maxlen, len(s) - i), 1, -1):
+                if s[i:i + n] in self._lookup:
+                    return i
+        return None
+
 
 def build_lexicon(con: sqlite3.Connection, aliases_path: Path, case_words_path: Path) -> Lexicon:
+    # A11: repealed laws are in the lexicon too (verify_statute reports LAW_REPEALED).
     names = {normalize(r[0]): r[0] for r in con.execute("SELECT law_name FROM laws")}
     raw_aliases = json.loads(Path(aliases_path).read_text(encoding="utf-8"))
     aliases = {normalize(k): names.get(normalize(v), v) for k, v in raw_aliases.items()}
@@ -50,7 +98,7 @@ _COURT_TAIL = re.compile(rf"({_COURT})\s*((?:民事|刑事|行政)庭?)?\s*$")
 _REF = re.compile(r"(\d+)年度?([一-鿿]{1,4}?)字第(\d+)號")
 _ELL = re.compile(r"(?:、|及|暨|與)\s*第(\d+)號")
 _SEP = re.compile(r"(?:、|及|暨|與)\s*")
-_KIND = re.compile(r"\s*(民事|刑事|行政)?(大法庭)?(判決|裁定)")
+_KIND = re.compile(r"\s*(民事|刑事|行政)?(大法庭)?(判決|裁定|判例|決議)")
 _INCOMPLETE = re.compile(r"最高法院[^。；，\n]{0,20}?\d+年度?[^。；，\n]{0,12}")
 
 
@@ -63,6 +111,14 @@ def out_of_scope(court: str | None, domain: str | None, case_word: str | None,
     if not case_word or "大" in case_word or case_word not in case_words:
         return True
     return False
+
+
+def _domain_stated(domain: str | None):
+    """A4: 民事 / 刑事 / 行政 as written in the brief, else None."""
+    for d in ("民事", "刑事", "行政"):
+        if domain and domain.startswith(d):
+            return d
+    return None
 
 
 def _extract_judgments(text: str, lex: Lexicon, warnings: list[str]) -> list[JudgmentCitation]:
@@ -94,17 +150,21 @@ def _extract_judgments(text: str, lex: Lexicon, warnings: list[str]) -> list[Jud
         # court / domain before the first reference
         prefix = text[max(0, items[0][0] - 40):items[0][0]]
         cm = _COURT_TAIL.search(prefix)
-        if not cm:
-            warnings.append(f"未標示法院之案號，未列入查核：{text[items[0][0]:pos]}")
-            continue
-        court = cm.group(1)
-        domain = cm.group(2)
-        raw_start = items[0][0] - (len(prefix) - cm.start())
-        if court == "同院":
-            court = last_court
-            if court is None:
-                warnings.append(f"「同院」前文無可承接之法院，未列入查核：{text[raw_start:pos]}")
-                continue
+        court_inferred = False
+        if cm:
+            court = cm.group(1)
+            domain = cm.group(2)
+            raw_start = items[0][0] - (len(prefix) - cm.start())
+            if court == "同院":
+                court = last_court
+                if court is None:
+                    warnings.append(f"「同院」前文無可承接之法院，未列入查核：{text[raw_start:pos]}")
+                    continue
+        else:
+            # A6: no court named. A Supreme Court civil case word -> infer the court; else out of scope.
+            court, domain, raw_start = None, None, items[0][0]
+            if items[0][3] in lex.case_words:
+                court, court_inferred = SUPREME, True
         km = _KIND.match(text, pos)
         doc_kind = None
         end_all = pos
@@ -115,14 +175,16 @@ def _extract_judgments(text: str, lex: Lexicon, warnings: list[str]) -> list[Jud
                 domain = km.group(1)
             if km.group(2):
                 domain = (domain or "") + "大法庭"
-        last_court = court
+        if cm:
+            last_court = court
         for i, (s0, e0, year, word, no) in enumerate(items):
             start = raw_start if i == 0 else s0
             end = end_all if i == len(items) - 1 else e0
-            scope_out = out_of_scope(court, domain, word, lex.case_words)
+            scope_out = out_of_scope(court, domain, word, lex.case_words) or doc_kind in ("判例", "決議")
             out.append(JudgmentCitation(
                 raw=text[start:end], span=Span(start=start, end=end), court=court,
                 year=year, case_word=word, case_no=no, doc_kind=doc_kind,
+                domain_stated=_domain_stated(domain), court_inferred=court_inferred,
                 status=JudgmentStatus.OUT_OF_SCOPE if scope_out else JudgmentStatus.NOT_FOUND_IN_SCOPE))
     covered = [(c.span.start, c.span.end) for c in out]
     for fm in _INCOMPLETE.finditer(text):
@@ -146,6 +208,21 @@ def _int(x):
     return int(x) if x else None
 
 
+def _trailing_cjk(text: str, end: int, limit: int = 30) -> str:
+    i = end
+    while i > 0 and end - i < limit and _is_cjk(text[i - 1]):
+        i -= 1
+    return text[i:end]
+
+
+def _unresolved_name_start(run: str, run_start: int, lex: Lexicon) -> int:
+    """A2: where `raw` starts for LAW_OUT_OF_SCOPE / LAW_NAME_UNCERTAIN (absolute text index)."""
+    i = lex.first_name_start(run)
+    if i is not None:
+        return run_start + i
+    return run_start + max(0, len(run) - 12)
+
+
 def _extract_statutes(text: str, lex: Lexicon) -> list[StatuteCitation]:
     # collect candidates in text order (articles and "同條" back-references)
     cands = sorted([(m.start(), "art", m) for m in _ART.finditer(text)] +
@@ -164,23 +241,47 @@ def _extract_statutes(text: str, lex: Lexicon) -> list[StatuteCitation]:
         else:
             raw_start = start
             law = None
+            status = None
             gap = text[prev_end:start] if prev is not None and prev_end >= 0 else None
-            window = text[max(0, start - 80):start]
+            win_start = max(0, start - 80)
+            window = text[win_start:start]
             if gap is not None and _STAT_SEP.fullmatch(gap):
                 law = prev.law_name
+                status = prev.status if prev.status in (
+                    StatuteStatus.LAW_NAME_UNCERTAIN, StatuteStatus.LAW_OUT_OF_SCOPE) else None
             elif window.rstrip().endswith("同法"):
                 law = prev.law_name if prev else None
                 raw_start = start - (len(window) - len(window.rstrip())) - 2
             else:
                 hit = lex.law_suffix(window)
                 if hit:
-                    law = hit[0]
-                    raw_start = max(0, start - 80) + hit[2]
+                    name_start = win_start + hit[2]
+                    raw_start = name_start
+                    if boundary_ok(text[:name_start]):          # A1
+                        law = hit[0]
+                    else:
+                        status = StatuteStatus.LAW_NAME_UNCERTAIN
+                else:                                            # A2
+                    run = _trailing_cjk(text, start)
+                    run_start = start - len(run)
+                    if any(run.endswith(s) for s in NON_STATUTE_SUFFIXES):
+                        continue                                  # a contract / charter clause
+                    if any(run.endswith(s) for s in BACKREF_SUFFIXES):
+                        status = StatuteStatus.UNRESOLVED_REF
+                    elif any(run.endswith(s) for s in ORDER_SUFFIXES):
+                        status = StatuteStatus.LAW_OUT_OF_SCOPE
+                        raw_start = _unresolved_name_start(run, run_start, lex)
+                    elif run.endswith(("法", "條例", "通則")) and len(run) >= 3:
+                        status = StatuteStatus.LAW_NAME_UNCERTAIN
+                        raw_start = _unresolved_name_start(run, run_start, lex)
+                    else:
+                        status = StatuteStatus.UNRESOLVED_REF
+            if status is None:
+                status = StatuteStatus.UNRESOLVED_REF if law is None else StatuteStatus.LAW_NOT_FOUND
             c = StatuteCitation(
                 raw=text[raw_start:m.end()], span=Span(start=raw_start, end=m.end()),
                 law_name=law, article=_art_key(m), paragraph=_int(m.group(3)),
-                subparagraph=_int(m.group(4)),
-                status=StatuteStatus.UNRESOLVED_REF if law is None else StatuteStatus.LAW_NOT_FOUND)
+                subparagraph=_int(m.group(4)), status=status)
         out.append(c)
         prev, prev_end = c, m.end()
     return out
@@ -223,10 +324,65 @@ def attach_claim_sentences(text: str, judgments: list[JudgmentCitation]) -> None
         j.claim_sentence = sentence[-_MAX_CLAIM:]
 
 
-def extract_all(text: str, lex: Lexicon):
-    """text must be normalize()d. Returns (statutes, judgments, warnings)."""
+# ------------------------------------------------- A12: other authorities
+_N = "[0-9〇○零一二三四五六七八九十百千]+"
+_AUTHORITY_PATTERNS = [
+    ("釋字", re.compile(rf"(?:司法院|大法官)?釋字第{_N}號(?:解釋)?")),
+    ("憲判字", re.compile(rf"(?:憲法法庭)?{_N}年憲判字第{_N}號(?:判決)?")),
+    ("決議", re.compile(
+        rf"(?:最高法院)?{_N}年度?第{_N}次(?:民事庭|民刑事庭|刑事庭)會議(?:決議(?:[(（]{_N}[)）])?)?")),
+    ("座談會", re.compile(rf"{_N}年[^。；\n]*?法律座談會")),
+]
+
+
+def _extract_other_authorities(text: str) -> list[OtherAuthority]:
+    out = []
+    for kind, pat in _AUTHORITY_PATTERNS:
+        for m in pat.finditer(text):
+            if kind == "座談會" and len(m.group(0)) > 40:
+                continue
+            out.append(OtherAuthority(raw=m.group(0), span=Span(start=m.start(), end=m.end()), kind=kind))
+    return sorted(out, key=lambda a: (a.span.start, a.span.end))
+
+
+# ------------------------------------------------- A13: unrecognized citations
+_CITE_WORDS = ("判決", "裁定", "判例", "決議", "解釋", "參照")
+
+
+def _find_unrecognized(text: str, judgments, others) -> list[UnrecognizedSentence]:
+    spans = [(c.span.start, c.span.end) for c in judgments] + [(a.span.start, a.span.end) for a in others]
+    out = []
+    for s, e in _sentences(text):
+        sent = text[s:e]
+        if "號" not in sent or not any(w in sent for w in _CITE_WORDS):
+            continue
+        if any(a < e and s < b for a, b in spans):
+            continue
+        out.append(UnrecognizedSentence(text=sent[:200], span=Span(start=s, end=e)))
+    return out
+
+
+# ------------------------------------------------------------------ entry
+@dataclass
+class ExtractResult:
+    statutes: list[StatuteCitation]
+    judgments: list[JudgmentCitation]
+    warnings: list[str]
+    other_authorities: list[OtherAuthority]
+    unrecognized: list[UnrecognizedSentence]
+
+
+def extract_full(text: str, lex: Lexicon) -> ExtractResult:
+    """text must be normalize()d."""
     warnings: list[str] = []
     judgments = _extract_judgments(text, lex, warnings)
     statutes = _extract_statutes(text, lex)
     attach_claim_sentences(text, judgments)
-    return statutes, judgments, warnings
+    others = _extract_other_authorities(text)
+    return ExtractResult(statutes, judgments, warnings, others, _find_unrecognized(text, judgments, others))
+
+
+def extract_all(text: str, lex: Lexicon):
+    """Kept for existing callers. Returns (statutes, judgments, warnings)."""
+    r = extract_full(text, lex)
+    return r.statutes, r.judgments, r.warnings

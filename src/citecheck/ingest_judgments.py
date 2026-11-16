@@ -8,6 +8,16 @@ from .db import connect, set_meta
 CIVIL_DIR = "最高法院民事"
 CIVIL_PREFIX = "TPSV"
 _KIND_RE = re.compile(r"(判決|裁定)")
+_MONTH_RE = re.compile(r"^(\d{6})(--.*)?$")
+
+
+def month_of(path: Path) -> str | None:
+    """A3: first 6 digits of the nearest ancestor folder named YYYYMM or YYYYMM--..."""
+    for part in reversed(path.parts[:-1]):
+        m = _MONTH_RE.match(part)
+        if m:
+            return m.group(1)
+    return None
 
 
 def doc_kind(full_text: str) -> str | None:
@@ -36,12 +46,17 @@ def ingest_judgments(src: Path, db_path=None) -> dict:
                 skipped += 1
                 continue
             con.execute(
-                "INSERT OR REPLACE INTO judgments VALUES(?,?,?,?,?,?,?,?)",
+                "INSERT OR REPLACE INTO judgments(jid, year, case_word, case_no, doc_kind, date, title, "
+                "full_text, pdf_url, month) VALUES(?,?,?,?,?,?,?,?,?,?)",
                 (jid, int(j["JYEAR"]), j["JCASE"], int(j["JNO"]), doc_kind(j["JFULL"]),
-                 j["JDATE"], j["JTITLE"], j["JFULL"]))
+                 j["JDATE"], j["JTITLE"], j["JFULL"], (j.get("JPDF") or "").strip() or None,
+                 month_of(p)))
             n += 1
         row = con.execute("SELECT MIN(year), MAX(year), MIN(date), MAX(date) FROM judgments").fetchone()
         for k, v in zip(("year_min", "year_max", "date_min", "date_max"), row):
             set_meta(con, k, "" if v is None else str(v))
+        months = [r[0] for r in con.execute(
+            "SELECT DISTINCT month FROM judgments WHERE month IS NOT NULL ORDER BY month")]
+        set_meta(con, "months_imported", json.dumps(months))
     con.close()
     return {"judgments": n, "skipped_non_civil": skipped}

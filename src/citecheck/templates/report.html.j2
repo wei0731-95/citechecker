@@ -38,7 +38,7 @@ blockquote{margin:6px 0;padding:6px 12px;border-left:3px solid var(--line);white
 </table>
 
 <h2>二、書狀全文</h2>
-<p class="meta">底色：<span class="badge green">綠：通過</span><span class="badge red">紅：需處理</span><span class="badge orange">橘：需留意</span><span class="badge gray">灰：無法查核或未判斷</span>（顯示的是正規化後的文字，例如「臺」顯示為「台」）</p>
+<p class="meta">底色：<span class="badge green">綠：通過</span><span class="badge red">紅：需處理</span><span class="badge orange">橘：需留意</span><span class="badge gray">灰：無法查核或未判斷</span></p>
 <div class="brief">{% for p in pieces %}{% if p.cls %}<a class="hl {{ p.cls }}" id="t{{ p.n }}" href="#c{{ p.n }}">{{ p.text }}</a>{% else %}{{ p.text }}{% endif %}{% endfor %}</div>
 
 <h2>三、逐筆明細</h2>

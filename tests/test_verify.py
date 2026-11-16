@@ -16,7 +16,7 @@ LEX = Lexicon({}, {}, {"台上", "台抗", "台聲"})
 def con():
     c = sqlite3.connect(":memory:")
     c.executescript(SCHEMA)
-    c.execute("INSERT INTO laws VALUES('假法','20250101')")
+    c.execute("INSERT INTO laws(law_name, modified_date) VALUES('假法','20250101')")
     c.executemany("INSERT INTO articles VALUES('假法',?,?)",
                   [("1", "fake 條文一"), ("2", "（刪除）"), ("15-1", "fake 條文之一")])
     rows = [("TPSV,110,台上,5,20260101,1", 110, "台上", 5, "判決"),
@@ -24,10 +24,11 @@ def con():
             ("TPSV,115,台上,7,20260101,2", 115, "台上", 7, "裁定"),
             ("TPSV,115,台聲,9,20260101,1", 115, "台聲", 9, "裁定"),
             ("TPSV,115,台聲,9,20260101,2", 115, "台聲", 9, "裁定")]
-    c.executemany("INSERT INTO judgments VALUES(?,?,?,?,?,?,?,?)",
-                  [(*r[:5], "20260101", "fake", "fake") for r in rows])
+    c.executemany("INSERT INTO judgments(jid, year, case_word, case_no, doc_kind, date, title, full_text, month) "
+                  "VALUES(?,?,?,?,?,?,?,?,?)", [(*r[:5], "20260101", "fake", "fake", "202601") for r in rows])
     set_meta(c, "year_min", "110")
     set_meta(c, "year_max", "115")
+    set_meta(c, "months_imported", '["202601", "202602"]')   # covers ROC year 115 only
     return c
 
 
@@ -67,7 +68,11 @@ def test_judgment_found(con):
 
 
 def test_judgment_not_found_in_scope(con):
-    assert verify_judgment(jd(115, "台上", 8888), con, LEX).status == JudgmentStatus.NOT_FOUND_IN_SCOPE
+    # A3/A4: a covered year, and the brief says 民事 -> 查無; without 民事 -> CIVIL_ONLY
+    c = jd(115, "台上", 8888)
+    c.domain_stated = "民事"
+    assert verify_judgment(c, con, LEX).status == JudgmentStatus.NOT_FOUND_IN_SCOPE
+    assert verify_judgment(jd(115, "台上", 8888), con, LEX).status == JudgmentStatus.NOT_FOUND_CIVIL_ONLY
 
 
 def test_judgment_out_of_scope(con):

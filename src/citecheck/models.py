@@ -15,6 +15,11 @@ class StatuteStatus(str, Enum):
     ARTICLE_NOT_FOUND = "ARTICLE_NOT_FOUND"
     ARTICLE_DELETED = "ARTICLE_DELETED"
     UNRESOLVED_REF = "UNRESOLVED_REF"
+    LAW_NAME_UNCERTAIN = "LAW_NAME_UNCERTAIN"          # A1
+    LAW_OUT_OF_SCOPE = "LAW_OUT_OF_SCOPE"              # A2
+    LAW_REPEALED = "LAW_REPEALED"                      # A11
+    PARAGRAPH_NOT_FOUND = "PARAGRAPH_NOT_FOUND"        # B1
+    SUBPARAGRAPH_NOT_FOUND = "SUBPARAGRAPH_NOT_FOUND"  # B1
 
 
 class JudgmentStatus(str, Enum):
@@ -23,6 +28,21 @@ class JudgmentStatus(str, Enum):
     OUT_OF_SCOPE = "OUT_OF_SCOPE"
     AMBIGUOUS = "AMBIGUOUS"
     DATA_NOT_COVERED = "DATA_NOT_COVERED"
+    NOT_FOUND_CIVIL_ONLY = "NOT_FOUND_CIVIL_ONLY"      # A4
+
+
+class StatuteL2Label(str, Enum):
+    MATCHES = "MATCHES"
+    MISMATCH = "MISMATCH"
+    NOT_STATED = "NOT_STATED"
+    UNCERTAIN = "UNCERTAIN"
+    NOT_RUN = "NOT_RUN"
+
+
+class StatuteRelation(str, Enum):  # the LLM may only answer one of these three
+    CONSISTENT = "CONSISTENT"
+    INCONSISTENT = "INCONSISTENT"
+    NO_DESCRIPTION = "NO_DESCRIPTION"
 
 
 class SegmentRole(str, Enum):
@@ -54,6 +74,35 @@ class Span(BaseModel):
     end: int    # exclusive
 
 
+class SimilarJudgment(BaseModel):  # Phase G
+    jid: str
+    display: str
+    passage: str
+    confidence: float
+    pdf_url: str | None = None
+
+
+class OtherAuthority(BaseModel):  # A12
+    raw: str
+    span: Span
+    original_span: Span | None = None
+    kind: Literal["釋字", "憲判字", "決議", "座談會"]
+
+
+class UnrecognizedSentence(BaseModel):  # A13
+    text: str
+    span: Span
+    original_span: Span | None = None
+
+
+class RunStats(BaseModel):  # F3
+    api_calls: int = 0
+    cache_hits: int = 0
+    prep_new: int = 0
+    skipped_by_cap: int = 0
+    seconds: float = 0.0
+
+
 class StatuteCitation(BaseModel):
     type: Literal["STATUTE"] = "STATUTE"
     raw: str
@@ -65,6 +114,14 @@ class StatuteCitation(BaseModel):
     # Placeholder until verify.py runs (extract.py only sets UNRESOLVED_REF itself).
     status: StatuteStatus = StatuteStatus.LAW_NOT_FOUND
     article_text: str | None = None
+    original_span: Span | None = None          # A8
+    law_url: str | None = None                 # A9
+    article_url: str | None = None             # A9
+    not_in_force_note: bool = False            # A10
+    structure_unchecked: bool = False          # B1: True = paragraph/subparagraph check not done
+    claim_sentence: str | None = None          # B2
+    l2_label: StatuteL2Label = StatuteL2Label.NOT_RUN
+    l2_confidence: float | None = None
 
 
 class L2Evidence(BaseModel):
@@ -90,6 +147,14 @@ class JudgmentCitation(BaseModel):
     claim_sentence: str | None = None
     l2_label: L2Label = L2Label.NOT_RUN
     l2_evidence: L2Evidence | None = None
+    original_span: Span | None = None                                  # A8
+    domain_stated: Literal["民事", "刑事", "行政"] | None = None         # A4
+    court_inferred: bool = False                                       # A6
+    pdf_url: str | None = None                                         # A9
+    main_text: str | None = None                                       # section 11
+    procedural_dismissal: bool = False                                 # C3
+    latest_year_note: bool = False                                     # A3
+    similar: list[SimilarJudgment] = Field(default_factory=list)       # G
 
 
 class DataCoverage(BaseModel):
@@ -99,6 +164,8 @@ class DataCoverage(BaseModel):
     judgment_date_min: str | None = None
     judgment_date_max: str | None = None
     judgment_count: int = 0
+    months_imported: list[str] = Field(default_factory=list)   # ["202305", "202602", ...]
+    covered_years: list[int] = Field(default_factory=list)     # ROC years; see A3
 
 
 class Report(BaseModel):
@@ -109,3 +176,9 @@ class Report(BaseModel):
     statutes: list[StatuteCitation]
     judgments: list[JudgmentCitation]
     warnings: list[str] = Field(default_factory=list)
+    original_text: str = ""                                            # A8: text as pasted
+    other_authorities: list[OtherAuthority] = Field(default_factory=list)
+    unrecognized: list[UnrecognizedSentence] = Field(default_factory=list)
+    llm_model: str | None = None
+    versions: dict[str, int] = Field(default_factory=dict)
+    stats: RunStats = Field(default_factory=RunStats)

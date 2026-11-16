@@ -34,10 +34,10 @@ def test_doc_kind():
 def test_ingest_laws(tmp_path):
     db = tmp_path / "t.db"
     r = ingest_laws(FX / "fake_laws", db)
-    assert r == {"laws": 2, "articles": 4, "abolished_skipped": 1}
+    assert r == {"laws": 2, "repealed": 1, "articles": 5}   # A11: repealed laws are kept
     con = connect(db)
     assert con.execute("SELECT text FROM articles WHERE law_name='假法' AND article='15-1'").fetchone()[0] == "乙條文。"
-    assert con.execute("SELECT COUNT(*) FROM laws WHERE law_name='假廢止法'").fetchone()[0] == 0
+    assert con.execute("SELECT repealed FROM laws WHERE law_name='假廢止法'").fetchone()[0] == 1
     assert con.execute("SELECT text FROM articles WHERE law_name='假增修條文'").fetchone()[0] == "y"
 
 
@@ -45,7 +45,7 @@ def test_ingest_laws_idempotent(tmp_path):
     db = tmp_path / "t.db"
     ingest_laws(FX / "fake_laws", db)
     ingest_laws(FX / "fake_laws", db)
-    assert connect(db).execute("SELECT COUNT(*) FROM articles").fetchone()[0] == 4
+    assert connect(db).execute("SELECT COUNT(*) FROM articles").fetchone()[0] == 5
 
 
 def test_ingest_judgments(tmp_path):

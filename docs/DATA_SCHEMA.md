@@ -36,3 +36,18 @@
 4. 字別清單 8 種來自此 7 個月，仍可能漏（如台簡再）。接受？
 5. 法規 XML 含已廢止 322 部：擬匯入時排除。憲法增修條文 28 筆純數字條號：擬保留原樣。
 6. Python 3.11 以 Docker（python:3.11-slim）處理。
+
+## E. SPEC_V2 Phase A 之後的資料庫結構（schema_version = 2）
+- `laws` 新增：`url`（`<法規網址>`）、`pcode`（網址中 `pcode=` 之後的值）、`repealed`（`<廢止註記>` 非空白為 1；廢止法規照常匯入）、`effective_date`、`effective_note`（`<生效日期>`、`<生效內容>` 原文）。
+- `judgments` 新增：`pdf_url`（`JPDF`，空字串存 NULL）、`month`（所在資料夾 `YYYYMM[--…]` 的前 6 碼）、`procedural_dismissal`（Phase C 填）。
+- 新表（Phase F、G 才會寫入）：`segments`、`passages`、`quoted_sentences`、`judgment_prep`。
+- `meta` 新增：`schema_version`、`months_imported`（JSON 陣列）。
+- 舊結構資料庫備份為 `data/citecheck.v1.db`；`connect()` 開到沒有 `judgments.pdf_url` 的資料庫會報錯「資料庫是舊版結構，請刪除後重新匯入」。
+
+### A10 的依據（尚未施行的條文）
+- 民法 `<生效日期>` 為 `99991231`；`<生效內容>` 列出第 166-1 條（施行日期另定）與第 1223 條（115 年 8 月 17 日修正公布，公布六個月後施行）。資料庫中民法第 1223 條已是修正後、尚未生效的條文。
+- 現行法規中 `<生效內容>` 非空白者 96 部（2026-11-17 實測）。
+- 判斷方式：`articles_in_note(effective_note)` 從該欄文字取出條號集合；引用的條號在集合內就標 `not_in_force_note`。
+
+### 已匯入的裁判月份（2026-11-17 實測）
+202305（509 筆）、202602（246）、202603（373）、202604（378）、202605（365）、202606（376）、202607（370）、202608（413）；合計 3,030 筆。202306–202601 之間共 32 個月缺漏，因此目前沒有任何案號年度算「已涵蓋」（A3）。

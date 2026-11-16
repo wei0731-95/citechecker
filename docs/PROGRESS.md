@@ -93,3 +93,56 @@
 ### 測試集人工複核工具
 - eval/make_review_sheet.py → eval/review/review_sheet.html：盲測複核表（只顯示書狀與判決全文，不顯示金標），25 題（L2 金標非 NOT_RUN 者）；答案暫存於瀏覽器，可匯出 review_answers.json。
 - eval/compare_review.py：比對複核者答案與金標，算初次一致率並列出不一致題目；`--apply` 只寫 annotators／agreed_first_pass，**不改金標**。F、G 類與法條狀態是資料庫可驗證的事實，不需人工標註。
+
+## SPEC_V2 Phase A
+
+### 1. 完成了什麼（對應 SPEC_V2 §4）
+- A0：`git init` 並 commit（`chore: snapshot before SPEC_V2`）；`.gitignore` 加 `data/*.db`、`data/llm_failures.log`、`out/`；§3 的 Enum、模型欄位、資料表一次加好（`SCHEMA_VERSION = 2`）；舊資料庫改名 `data/citecheck.v1.db`，`connect()` 對舊結構報錯。
+- A7：`strip_markdown`（`**`、`__`、反引號；行首 `#`、`- `、`* `、`> `）。
+- A8：`normalize_with_map` 與 `_sub`；`Report.original_text`；每筆引用（含 `other_authorities`、`unrecognized`）的 `original_span`；HTML 全文改顯示原文，重疊時後一筆從前一筆結尾開始上色。
+- A1：`boundary_ok` 與兩個常數（逐字）；`data/law_aliases.json` 新增「刑法」「憲法」。
+- A2：`NON_STATUTE_SUFFIXES`、`BACKREF_SUFFIXES`、`ORDER_SUFFIXES`（逐字）與五段判斷表；`verify_statute` 不覆蓋 `LAW_NAME_UNCERTAIN`、`LAW_OUT_OF_SCOPE`。
+- A11：廢止法規匯入（`repealed=1`），詞典含廢止法規名稱，`LAW_REPEALED`，`stats` 分開顯示。
+- A9：`url`、`pcode`、`pdf_url` 入庫；`verify` 填 `law_url`／`article_url`／`pdf_url`（`ARTICLE_URL` 常數定義在 `verify.py`，`report.py` 重新匯出）。
+- A10：`effective_date`、`effective_note` 入庫；`articles_in_note`；`not_in_force_note`＋`structure_unchecked`。
+- A3：`judgments.month`、`months_imported`、`covered_years`、新的 `verify_judgment` 流程（先查資料庫、查不到才看涵蓋範圍）、`stats` 新增三行與低筆數月份、`data_coverage` 填 `months_imported`／`covered_years`。
+- A4：`domain_stated`；A5：`判例`／`決議` 為 OUT_OF_SCOPE；A6：沒寫法院時依字別推定；A12：`other_authorities`；A13：`unrecognized`。
+- `extract_full()` 回傳 `ExtractResult`（含 `other_authorities`、`unrecognized`）；`extract_all()` 保留，仍回傳三元組。
+- 重新匯入：8 個月（202305、202602–202608）、3,030 筆判決；法規 1,029 現行、322 廢止、47,377 條。`stats` 輸出：已涵蓋的案號年度「無」（缺漏月份 32 個：202306–202601）。詳見 `docs/DATA_SCHEMA.md` §E。
+
+### 2. 我做的解讀（文件沒寫到、我自己決定的地方）
+1. `verify_judgment`：同一字號查到多筆、且書狀寫的 `doc_kind` 一筆都對不上時 → `AMBIGUOUS`（不是查無）。理由：資料庫確實有這個字號，標成紅色「查無」違反 §0 的優先順序。
+2. A2 的 `run` 只取「緊鄰」`第N條` 前面的連續中文字，不跳過空白。
+3. A12 的「決議」比對在 `normalize` 之後的文字上做；`normalize` 已把 `第七四八號` 轉成 `第748號`，所以 `raw` 是阿拉伯數字寫法。
+4. `ARTICLE_URL` 常數放在 `verify.py`（`verify_statute` 要用，`report.py` 又 import `verify`，放在 `report.py` 會循環 import）；`report.py` 從 `verify` 匯入，`report.ARTICLE_URL` 仍可用。
+5. A9「條號不符合 `^\d+(-\d+)?$` 只給 `law_url`」：資料庫裡純數字條號（如憲法增修條文的 `1`）符合該式，所以也會有 `article_url`；只有真正帶其他寫法的條號才只給法規連結。
+6. `main_text`（§11）在 `verify_judgment` 查得到時就用 `segment()` 取出 `part == "main"` 的段落、以換行相接填入。
+7. 暫時讓 `report.ZH`、`color_of` 認得新狀態（文字照 §11.2、§11.3 的說明文字，顏色依 §11.1 的等級對應），避免報告當掉；完整的四等級重寫（`level_of`）留給後面的 Phase。
+8. `A6`：沒寫法院、字別在清單內時，`last_court`（供「同院」承接用）不更新，因為這個法院不是書狀寫出來的。
+
+### 3. 被調整預期值的既有測試
+| 測試 | 原預期 | 新預期 | 對應 |
+|---|---|---|---|
+| `test_ingest_laws` | 回傳 `{"laws":2,"articles":4,"abolished_skipped":1}`；廢止法不在 `laws` | 回傳 `{"laws":2,"repealed":1,"articles":5}`；廢止法 `repealed=1` | A11 |
+| `test_ingest_laws_idempotent` | 條文 4 筆 | 5 筆（廢止法條文也匯入） | A11 |
+| `test_court_missing_is_skipped_with_warning` → `test_court_missing_is_inferred_for_supreme_civil_case_word` | 找不到法院 → 略過並警告 | 字別在清單內 → 輸出，`court_inferred=True`，無警告 | A6 |
+| `test_judgment_not_found_in_scope` | 115 台上 8888 → `NOT_FOUND_IN_SCOPE` | 書狀寫「民事」→ `NOT_FOUND_IN_SCOPE`；沒寫 → `NOT_FOUND_CIVIL_ONLY` | A3、A4 |
+| `test_eval_no_l2_matches_hand_computation`（含 `fake_testset.jsonl`） | 抽取 6/7、L1 5/6、錯誤 2 列（E01 抽取失敗） | 抽取 7/7、L1 6/7、錯誤 1 列（E01 改為推定法院後抽得到）；B01 的 raw 改為「…第8號民事判決」，維持金標 `NOT_FOUND_IN_SCOPE` | A3、A4、A6 |
+| `test_report.py` 的 `test_colors_follow_spec` 等 | 書狀「…第99號判決」→ 紅 | 書狀改寫「…第99號民事判決」仍為紅 | A3、A4 |
+| 各測試資料庫 fixture | `INSERT … VALUES` 位置參數；以 `year_min`／`year_max` 當涵蓋 | 改用具名欄位；加 `months_imported` | §3.3、A3 |
+
+### 4. pytest
+136 項通過（Phase A 之前 96 項）。
+
+### 5. 評測數字（AI 標註，未經人工複核；沒有 API 金鑰，全部加 `--no-l2`）
+- `eval/testset.jsonl`（v1）：Phase A 之前 → 之後
+  - 抽取召回率 42/42 → 42/42
+  - L1 正確率 42/42 → **39/42（92.9%）**
+  - 變差的題號：**F01、F02、F03**（最高法院 115 年度台上字第 7756、3081、2224 號）。原因：金標 `NOT_FOUND_IN_SCOPE`，現在是 `DATA_NOT_COVERED`——資料缺 202601，115 年度不算已涵蓋（§4 A3 已預告）。
+- `eval/testset_v2.jsonl`：尚不存在（Phase T 才建）。
+
+### 6. 沒做或沒驗證的事
+- 還沒有用真實資料庫對真實判決的全文做 A1／A2 的大量量測（SPEC_V2 的 99.3% 是它自己量的）。
+- A12／A13 的規則只用單元測試驗證。
+- HTML 報告改顯示原文後，只有單元測試涵蓋（沒有開瀏覽器檢查版面）。
+- §11 的四等級顯示、`level_of`、頁首聲明等尚未實作（後面的 Phase）。

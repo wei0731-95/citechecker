@@ -91,9 +91,11 @@ def test_incomplete_goes_to_warnings(lex):
     assert js == [] and len(warns) == 1
 
 
-def test_court_missing_is_skipped_with_warning(lex):
+def test_court_missing_is_inferred_for_supreme_civil_case_word(lex):
+    # SPEC_V2 A6 (was: skipped with a warning)
     _, js, warns = run("見109年度台上字第123號判決。", lex)
-    assert js == [] and warns
+    assert len(js) == 1 and js[0].court == "最高法院" and js[0].court_inferred and not warns
+    assert js[0].raw.startswith("109年度")
 
 
 # ---- claim sentence
