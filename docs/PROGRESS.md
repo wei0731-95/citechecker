@@ -276,3 +276,38 @@
 ### 6. 沒做或沒驗證的事
 - **C5 放行檢查未執行**（§1.6 第 4 點）。有金鑰時：先 `citecheck prep-samples`（選用），再 `citecheck eval eval/testset_v2.jsonl --out eval/results_v2`（第一次會替被引用的裁判做轉述句整理，之後走快取），檢查綠色精確率 ≥ 0.90 與「金標 PARTY_ARGUMENT／LOWER_COURT_VIEW 卻輸出 COURT_HOLDING」題數 ≤ 1。若不符，依 §8 C5 在 PROGRESS.md 逐題列出錯誤，**不要自行調整門檻、提示詞或規則**。
 - 已知不會被 Phase C 修正的缺陷：切段規則在原審理由的小段落被「查」或「當事人陳述句」誤觸發（C04、C05 的成因）；SPEC_V2 沒有安排修切段規則。
+
+## SPEC_V2 Phase D
+
+### 1. 完成了什麼（對應 SPEC_V2 §9，並實作 §11 的報告顯示規則）
+- `server.py` 與 `citecheck serve [--port 8000] [--host 127.0.0.1] [--db 路徑]`：標準函式庫 `ThreadingHTTPServer`＋自己的 `BaseHTTPRequestHandler`（沒有用 `SimpleHTTPRequestHandler`）；只有 `GET /`（表單頁 `templates/form.html.j2`）與 `POST /check`（與 `check` 指令相同的 HTML 報告），其他路徑一律 404。
+- 勾選框文字、按鈕處理中文字、兩個提示訊息（超過 50,000 字、空白）、頁首聲明都照規格逐字；L2 預設不勾（沒勾 → `client=None`）；勾了但環境變數沒設 → 回表單頁、HTTP 200、顯示錯誤與需要設定的環境變數名稱；缺索引時（勾選 L2 且有查得到的判決）同樣回表單頁並顯示「請先執行 citecheck build-index」。
+- 安全檢查依序：`Host` 不是 `127.0.0.1:<port>`／`localhost:<port>` → 403；`POST` 的 `Origin` 不是這兩者 → 403；`Content-Length` 缺少、非整數或 > 400,000 → 413（不讀本文）。每個請求自己開並關閉 SQLite 連線；貼上的文字與報告不寫入磁碟；`log_message` 靜音、`log_request` 只印時間、方法、路徑、狀態碼；全部走 `autoescape` 的 Jinja2；表單頁只有那一段內嵌 JavaScript，沒有外部資源。
+- §11 報告顯示：`ZH` 重寫（法條 15 列、判決 12 列、附加說明、其他依據、未辨識句子、相近裁判、上限略過）；`color_of` 改為 `level_of`（ok／check／notice／unknown，顏色＋文字標籤）；報告模板重寫為規格的頁面結構（頁首聲明 → 摘要四等級 → 原文 → 逐筆明細 → 未辨識的句子 → 頁尾涵蓋、法規資料過期提示、產生條件、來源、聲明）；明細依規格顯示連結、`這件裁判的主文`、主張句、證據段落；`stats_line` 供 `check` 與報告共用。
+- README 補上 `serve` 的 Docker 用法（`--host 0.0.0.0` 搭配 `-p 127.0.0.1:8000:8000`）。
+
+### 2. 我做的解讀
+1. §11 沒有明確指定在哪個 Phase 實作；因為 §9 第 10 點要求每份報告顯示 §11 的頁首聲明，我把整個 §11 在 Phase D 一起做完。
+2. 摘要的四個等級筆數把「其他依據」算在 unknown。
+3. 兩個固定上限互相作用：表單把一個中文字編成 9 個位元組，所以約 44,500 個中文字就會超過 400,000 位元組的本文上限，回 413（不是友善訊息）；英數字文字才能碰到 50,000 字的訊息。這是規格兩個數字的結果，**沒有放寬**；有測試記錄這個行為。
+4. `stats` 指令的「法規資料已超過 90 天沒有更新」提示（§11.5）尚未加；報告頁尾已有。
+5. Host 檢查用伺服器實際綁定的埠號；`--port 0` 時用系統配置的埠。
+6. 勾選 L2 時，沿用既有的 `CachingClient` 快取（只存模型回應，檔名是雜湊，不含貼上文字）。
+
+### 3. 被調整預期值的既有測試
+| 測試 | 原預期 | 新預期 | 對應 |
+|---|---|---|---|
+| `tests/test_report.py::test_colors_follow_spec` | `color_of` 回傳 green／orange／red／gray | `level_of` 回傳 ok／notice／check／unknown（法條 1 筆 ok、已刪除 notice、查無此條 check；判決查無 check、範圍外 unknown） | §11.1 |
+| `test_report.py::test_html_is_self_contained_and_escaped` | 報告含「查無公開裁判」 | 含「在最高法院民事裁判的公開資料中查不到這個字號」 | §11.3 |
+| `test_report.py::test_zh_wording_has_no_banned_terms` | `ZH["JUDGMENT"]["NOT_FOUND_IN_SCOPE"] == "查無公開裁判"` | 以 §11.3 的說明文字開頭 | §11.3 |
+
+### 4. pytest
+284 項通過（Phase C 結束時 229 項）。新增 `test_server.py`（16 項）、`test_display.py`（39 項：§11.2、11.3 每一列各一個、附加說明、頁面結構、頁尾、連結）。
+
+### 5. 評測數字（AI 標註，未經人工複核；沒有 API 金鑰，全部 `--no-l2`）
+- v1：抽取 42/42 → 42/42；L1 39/42 → 39/42。v2：抽取 91/91 → 91/91；L1 84/84 → 84/84。沒有變化（Phase D 沒有改抽取或查核邏輯）。
+- 手動驗證：在瀏覽器看過報告新版面；在 Docker 內啟動 `serve`（`-p 127.0.0.1:8000:8000`）用 curl 確認 GET／、404、POST、錯誤 Host 403、外來 Origin 403。
+
+### 6. 沒做或沒驗證的事
+- 勾選 L2 的網頁流程只用 `MockClient`／環境變數缺失的情況測過，沒有對真實 API 試過。
+- 沒有在各種瀏覽器檢查表單頁按鈕停用行為（只確認 HTML 內有那段 JavaScript）。

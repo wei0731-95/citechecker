@@ -13,59 +13,82 @@ body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 "Noto Sans TC",
 main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
 h1{font-size:1.5rem;margin:0 0 4px} h2{font-size:1.15rem;margin:32px 0 10px;border-bottom:1px solid var(--line);padding-bottom:4px}
 .meta{color:var(--muted);font-size:.9rem}
+.statement{border:2px solid var(--line);border-radius:6px;padding:10px 14px;background:var(--card);font-weight:600}
+.notice{border:1px solid var(--line);border-left:4px solid #d98b00;padding:8px 12px;margin:12px 0}
 table{border-collapse:collapse;width:100%;margin:8px 0}
 th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;font-size:.95rem} th{background:var(--card)}
 .brief{white-space:pre-wrap;word-break:break-word;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px}
 a.hl{color:inherit;text-decoration:none;border-radius:3px;padding:1px 2px}
+.tag{font-size:.72rem;border:1px solid var(--line);border-radius:3px;padding:0 3px;margin-left:2px;vertical-align:super}
 .green{background:var(--green)} .red{background:var(--red)} .orange{background:var(--orange)} .gray{background:var(--gray)}
 .card{border:1px solid var(--line);border-radius:6px;padding:10px 14px;margin:12px 0;background:var(--card)}
 .card h3{margin:0 0 6px;font-size:1rem}
 .badge{display:inline-block;border-radius:10px;padding:0 10px;font-size:.85rem;margin-right:6px}
 blockquote{margin:6px 0;padding:6px 12px;border-left:3px solid var(--line);white-space:pre-wrap;word-break:break-word}
-.k{color:var(--muted)} .warn{color:var(--muted)} footer{margin-top:40px;border-top:1px solid var(--line);padding-top:12px;color:var(--muted)}
+.k{color:var(--muted)} footer{margin-top:40px;border-top:1px solid var(--line);padding-top:12px;color:var(--muted);font-size:.92rem}
+footer p{margin:.3em 0}
 </style>
 </head>
 <body>
 <main>
 <h1>引用查核報告</h1>
 <p class="meta">檔案：{{ r.input_file }}　產生時間：{{ r.generated_at }}</p>
+<p class="statement">{{ header }}</p>
+{% if cap_note %}<p class="notice">{{ cap_note }}</p>{% endif %}
 
-<h2>一、摘要</h2>
+<h2>摘要</h2>
 <table>
-<tr><th>類別</th><th>狀態</th><th>筆數</th></tr>
-{% for label, n in summary %}<tr><td>{{ label[0] }}</td><td>{{ label[1] }}</td><td>{{ n }}</td></tr>
-{% else %}<tr><td colspan="3">未偵測到引用</td></tr>{% endfor %}
+<tr><th>等級</th><th>筆數</th></tr>
+{% for level in ["ok", "check", "notice", "unknown"] %}<tr><td><span class="badge {{ colors[level] }}">{{ labels[level] }}</span></td><td>{{ counts[level] }}</td></tr>
+{% endfor %}
 </table>
 
-<h2>二、書狀全文</h2>
-<p class="meta">底色：<span class="badge green">綠：通過</span><span class="badge red">紅：需處理</span><span class="badge orange">橘：需留意</span><span class="badge gray">灰：無法查核或未判斷</span></p>
-<div class="brief">{% for p in pieces %}{% if p.cls %}<a class="hl {{ p.cls }}" id="t{{ p.n }}" href="#c{{ p.n }}">{{ p.text }}</a>{% else %}{{ p.text }}{% endif %}{% endfor %}</div>
+<h2>書狀原文</h2>
+<p class="meta"><span class="badge green">查得到</span><span class="badge red">請確認</span><span class="badge orange">請留意</span><span class="badge gray">無法查核</span>（顏色之外，每個引用後面都有文字標籤）</p>
+<div class="brief">{% for p in pieces %}{% if p.color %}<a class="hl {{ p.color }}" id="t{{ p.n }}" href="#c{{ p.n }}">{{ p.text }}</a><span class="tag">{{ p.label }}</span>{% else %}{{ p.text }}{% endif %}{% endfor %}</div>
 
-<h2>三、逐筆明細</h2>
-{% for c in cites %}
+<h2>逐筆明細</h2>
+{% for c in rows %}
 <div class="card" id="c{{ c.n }}">
-<h3>{{ c.n }}. <span class="badge {{ c.cls }}">{{ c.status_zh }}</span>{% if c.l2_zh %}<span class="badge {{ c.l2_cls }}">{{ c.l2_zh }}</span>{% endif %}<a href="#t{{ c.n }}">回到全文</a></h3>
+<h3>{{ c.n }}. <span class="badge {{ c.color }}">{{ c.label }}</span><a href="#t{{ c.n }}">回到全文</a></h3>
 <div><span class="k">原文片段：</span>{{ c.raw }}</div>
+<p>{{ c.explanation }}{% for note in c.notes %}<br>{{ note }}{% endfor %}</p>
 {% if c.kind == "STATUTE" %}
-<div><span class="k">法規／條號：</span>{{ c.law_name or "（無法判定）" }}{% if c.article %} 第 {{ c.article }} 條{% endif %}{% if c.paragraph %} 第 {{ c.paragraph }} 項{% endif %}{% if c.subparagraph %} 第 {{ c.subparagraph }} 款{% endif %}</div>
+{% if c.law_name %}<div><span class="k">法規／條號：</span>{{ c.law_name }}{% if c.article %} 第 {{ c.article }} 條{% endif %}{% if c.paragraph %} 第 {{ c.paragraph }} 項{% endif %}{% if c.subparagraph %} 第 {{ c.subparagraph }} 款{% endif %}</div>{% endif %}
 {% if c.article_text %}<div class="k">現行條文：</div><blockquote>{{ c.article_text }}</blockquote>{% endif %}
-{% else %}
-<div><span class="k">法院／案號：</span>{{ c.court or "（未標示）" }} {{ c.year }} 年度{{ c.case_word }}字第 {{ c.case_no }} 號{% if c.doc_kind %}　{{ c.doc_kind }}{% endif %}{% if c.jid %}　<span class="k">裁判 ID：</span>{{ c.jid }}{% endif %}</div>
+{% if c.article_url %}<div><a href="{{ c.article_url }}" target="_blank" rel="noopener">{{ article_link }}</a></div>{% endif %}
+{% if c.law_url %}<div><a href="{{ c.law_url }}" target="_blank" rel="noopener">{{ law_link }}</a></div>{% endif %}
+{% elif c.kind == "JUDGMENT" %}
+<div><span class="k">字號：</span>{{ c.court or "（未標示法院）" }} {{ c.year }} 年度{{ c.case_word }}字第 {{ c.case_no }} 號{% if c.doc_kind %}　{{ c.doc_kind }}{% endif %}</div>
+{% if c.jid %}
+{% if c.pdf_url %}<div><a href="{{ c.pdf_url }}" target="_blank" rel="noopener">{{ pdf_link }}</a></div>{% endif %}
+{% if c.main_text %}<div class="k">這件裁判的主文：</div><blockquote>{{ c.main_text }}</blockquote>{% endif %}
 {% if c.claim_sentence %}<div class="k">書狀主張句：</div><blockquote>{{ c.claim_sentence }}</blockquote>{% endif %}
-{% if c.evidence %}<div class="k">判決中最相關的段落（角色：{{ c.evidence_role_zh }}；與主張的關係：{{ c.evidence_relation_zh }}；信心 {{ "%.2f"|format(c.evidence.confidence) }}）：</div><blockquote>{{ c.evidence.passage }}</blockquote>{% endif %}
+{% if c.evidence %}<div class="k">判決中最相關的段落（角色：{{ c.evidence_role }}；與書狀說法的關係：{{ c.evidence_relation }}）：</div><blockquote>{{ c.evidence.passage }}</blockquote>{% endif %}
+{% endif %}
+{% if c.similar %}
+<div class="k"><b>{{ zh.SIMILAR_TITLE }}</b></div>
+<p class="k">{{ zh.SIMILAR_NOTE }}</p>
+{% for s in c.similar %}<div>{{ s.display }}{% if s.pdf_url %}　<a href="{{ s.pdf_url }}" target="_blank" rel="noopener">{{ pdf_link }}</a>{% endif %}<blockquote>{{ s.passage }}</blockquote></div>{% endfor %}
+{% endif %}
 {% endif %}
 </div>
 {% else %}<p>未偵測到引用。</p>{% endfor %}
 
-{% if r.warnings %}<h2>四、警告</h2><ul>{% for w in r.warnings %}<li class="warn">{{ w }}</li>{% endfor %}</ul>{% endif %}
+{% if r.unrecognized %}
+<h2>{{ zh.UNRECOGNIZED_TITLE }}</h2>
+<ul>{% for u in r.unrecognized %}<li>{{ u.text }}</li>{% endfor %}</ul>
+{% endif %}
 
-<h2>{{ "五" if r.warnings else "四" }}、資料涵蓋範圍</h2>
-<ul>
-<li>法規資料日期：{{ cov.laws_update_date or "—" }}（僅含現行中央法規）</li>
-<li>判決資料：最高法院民事，共 {{ cov.judgment_count }} 筆；案號年度 {{ cov.judgment_year_min or "—" }} 至 {{ cov.judgment_year_max or "—" }}；裁判日期 {{ cov.judgment_date_min or "—" }} 至 {{ cov.judgment_date_max or "—" }}</li>
-</ul>
+{% if r.warnings %}<h2>警告</h2><ul>{% for w in r.warnings %}<li class="k">{{ w }}</li>{% endfor %}</ul>{% endif %}
 
-<footer>{{ disclaimer }}</footer>
+<footer>
+<p>資料涵蓋：法規資料日期 {{ cov.laws_update_date or "—" }}；已匯入的裁判月份 {{ months_note }}；已涵蓋的案號年度 {{ years_note }}。</p>
+{% if stale %}<p>{{ stale }}</p>{% endif %}
+<p>產生條件：模型 {{ model }}；版本 {{ versions }}；{{ stats_line }}。</p>
+<p>{{ sources }}</p>
+<p>{{ disclaimer }}</p>
+</footer>
 </main>
 </body>
 </html>

@@ -100,9 +100,8 @@ def check(
     typer.echo(f"判決引用 {len(report.judgments)} 筆：{dict(Counter(j.status.value for j in report.judgments))}")
     if client:
         typer.echo(f"L2：{dict(Counter(j.l2_label.value for j in report.judgments))}")
-    st = report.stats
-    typer.echo(f"API 呼叫 {st.api_calls} 次、快取命中 {st.cache_hits} 次、新整理裁判 {st.prep_new} 份、"
-               f"因上限略過 {st.skipped_by_cap} 筆、耗時 {st.seconds} 秒")
+    from .report import stats_line
+    typer.echo(stats_line(report.stats))
     for w in report.warnings:
         typer.echo(f"警告：{w}")
     typer.echo(f"已輸出：{path}、{html_path}")
@@ -154,6 +153,16 @@ def eval_cmd(
             typer.echo(f"法條不符偵測率：{fmt(metrics['statute_l2']['mismatch_detection_rate'])}")
             typer.echo(f"法條誤報率：{fmt(metrics['statute_l2']['false_alarm_rate'])}")
     typer.echo(f"錯誤 {len(errors)} 筆，已輸出至 {out}")
+
+
+@app.command()
+def serve(port: int = typer.Option(8000, "--port", help="埠號"),
+          host: str = typer.Option("127.0.0.1", "--host", help="綁定位址；在 Docker 內用 0.0.0.0"),
+          db: Path = typer.Option(DEFAULT_DB, "--db", help="資料庫路徑")):
+    """啟動本機網頁（貼上書狀、取得報告）。"""
+    from .server import serve as _serve
+
+    _serve(host, port, db)
 
 
 @app.command("eval-retrieval")

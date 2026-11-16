@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>書狀引用查核</title>
+<style>
+:root{--bg:#fff;--fg:#1f2328;--muted:#656d76;--line:#d0d7de;--card:#f6f8fa;--accent:#0b5cad}
+@media (prefers-color-scheme:dark){:root{--bg:#14171a;--fg:#e6e8ea;--muted:#9aa4ad;--line:#343b42;--card:#1c2126;--accent:#6cb2ff}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 "Noto Sans TC","Microsoft JhengHei",sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.5rem;margin:0 0 8px}
+.statement{border:2px solid var(--line);border-radius:6px;padding:10px 14px;background:var(--card);font-weight:600}
+.error{border:1px solid #c0392b;border-left:4px solid #c0392b;border-radius:4px;padding:8px 12px;margin:12px 0}
+textarea{width:100%;box-sizing:border-box;min-height:360px;padding:10px;font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px}
+label.l2{display:block;margin:12px 0}
+button{font:inherit;padding:8px 20px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+</style>
+</head>
+<body>
+<main>
+<h1>書狀引用查核</h1>
+<p class="statement">{{ header }}</p>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<form method="post" action="/check" id="f">
+<textarea name="text" placeholder="請貼上書狀文字（最多 50,000 字）">{{ text }}</textarea>
+<label class="l2"><input type="checkbox" name="l2" value="1"{% if l2 %} checked{% endif %}> {{ l2_label }}</label>
+<button type="submit" id="go">開始查核</button>
+</form>
+</main>
+<script>
+document.getElementById("f").addEventListener("submit", function () {
+  var b = document.getElementById("go");
+  b.disabled = true;
+  b.textContent = "{{ busy }}";
+});
+</script>
+</body>
+</html>

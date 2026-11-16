@@ -7,7 +7,7 @@ import pytest
 from citecheck.db import SCHEMA, set_meta
 from citecheck.extract import Lexicon
 from citecheck.llm import MockClient
-from citecheck.report import DISCLAIMER, ZH, build_report, color_of, render_html
+from citecheck.report import DISCLAIMER, ZH, build_report, level_of, render_html
 
 
 @pytest.fixture()
@@ -42,7 +42,7 @@ def test_html_is_self_contained_and_escaped(con):
     assert not re.search(r"https?://|<script|<link|<img", html)
     for banned in ("不存在", "偽造", "虛構"):
         assert banned not in html
-    assert "查無公開裁判" in html
+    assert "在最高法院民事裁判的公開資料中查不到這個字號" in html
     for cls in ("green", "red", "orange", "gray"):
         assert f'class="hl {cls}"' in html or cls != "green"
     assert html.count('class="card"') == len(r.statutes) + len(r.judgments)
@@ -51,13 +51,13 @@ def test_html_is_self_contained_and_escaped(con):
 def test_colors_follow_spec(con):
     r = build_report(BRIEF, "fake.txt", con, LEX, MockClient(
         json.dumps({"results": [{"id": i, "relation": "SUPPORTS", "confidence": 0.9} for i in range(1, 6)]})))
-    by = {s.article: color_of(s) for s in r.statutes}
-    assert by == {"1": "green", "2": "orange", "9": "red"}
-    j = {c.case_no: color_of(c) for c in r.judgments}
-    assert j[99] == "red" and j[1] == "gray"  # 查無公開裁判 / 範圍外
+    by = {s.article: level_of(s) for s in r.statutes}
+    assert by == {"1": "ok", "2": "notice", "9": "check"}
+    j = {c.case_no: level_of(c) for c in r.judgments}
+    assert j[99] == "check" and j[1] == "unknown"  # not found in a covered year / out of scope
 
 
 def test_zh_wording_has_no_banned_terms():
     flat = json.dumps(ZH, ensure_ascii=False)
     assert not any(b in flat for b in ("不存在", "偽造", "虛構"))
-    assert ZH["JUDGMENT"]["NOT_FOUND_IN_SCOPE"] == "查無公開裁判"
+    assert ZH["JUDGMENT"]["NOT_FOUND_IN_SCOPE"].startswith("在最高法院民事裁判的公開資料中查不到這個字號")
