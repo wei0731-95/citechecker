@@ -1,0 +1,6 @@
+data/citecheck.db
+data/llm_cache/
+data/raw/
+__pycache__/
+*.egg-info/
+.pytest_cache/

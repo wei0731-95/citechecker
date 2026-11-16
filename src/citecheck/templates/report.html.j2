@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>引用查核報告</title>
+<style>
+:root{--bg:#fff;--fg:#1f2328;--muted:#656d76;--line:#d0d7de;--card:#f6f8fa;
+--green:#d1f2d6;--red:#ffd0cc;--orange:#ffe2b8;--gray:#e4e7eb}
+@media (prefers-color-scheme:dark){:root{--bg:#14171a;--fg:#e6e8ea;--muted:#9aa4ad;--line:#343b42;--card:#1c2126;
+--green:#1d4a2a;--red:#5a2724;--orange:#5a4020;--gray:#32383e}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 "Noto Sans TC","Microsoft JhengHei",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.5rem;margin:0 0 4px} h2{font-size:1.15rem;margin:32px 0 10px;border-bottom:1px solid var(--line);padding-bottom:4px}
+.meta{color:var(--muted);font-size:.9rem}
+table{border-collapse:collapse;width:100%;margin:8px 0}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;font-size:.95rem} th{background:var(--card)}
+.brief{white-space:pre-wrap;word-break:break-word;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px}
+a.hl{color:inherit;text-decoration:none;border-radius:3px;padding:1px 2px}
+.green{background:var(--green)} .red{background:var(--red)} .orange{background:var(--orange)} .gray{background:var(--gray)}
+.card{border:1px solid var(--line);border-radius:6px;padding:10px 14px;margin:12px 0;background:var(--card)}
+.card h3{margin:0 0 6px;font-size:1rem}
+.badge{display:inline-block;border-radius:10px;padding:0 10px;font-size:.85rem;margin-right:6px}
+blockquote{margin:6px 0;padding:6px 12px;border-left:3px solid var(--line);white-space:pre-wrap;word-break:break-word}
+.k{color:var(--muted)} .warn{color:var(--muted)} footer{margin-top:40px;border-top:1px solid var(--line);padding-top:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<h1>引用查核報告</h1>
+<p class="meta">檔案：{{ r.input_file }}　產生時間：{{ r.generated_at }}</p>
+
+<h2>一、摘要</h2>
+<table>
+<tr><th>類別</th><th>狀態</th><th>筆數</th></tr>
+{% for label, n in summary %}<tr><td>{{ label[0] }}</td><td>{{ label[1] }}</td><td>{{ n }}</td></tr>
+{% else %}<tr><td colspan="3">未偵測到引用</td></tr>{% endfor %}
+</table>
+
+<h2>二、書狀全文</h2>
+<p class="meta">底色：<span class="badge green">綠：通過</span><span class="badge red">紅：需處理</span><span class="badge orange">橘：需留意</span><span class="badge gray">灰：無法查核或未判斷</span>（顯示的是正規化後的文字，例如「臺」顯示為「台」）</p>
+<div class="brief">{% for p in pieces %}{% if p.cls %}<a class="hl {{ p.cls }}" id="t{{ p.n }}" href="#c{{ p.n }}">{{ p.text }}</a>{% else %}{{ p.text }}{% endif %}{% endfor %}</div>
+
+<h2>三、逐筆明細</h2>
+{% for c in cites %}
+<div class="card" id="c{{ c.n }}">
+<h3>{{ c.n }}. <span class="badge {{ c.cls }}">{{ c.status_zh }}</span>{% if c.l2_zh %}<span class="badge {{ c.l2_cls }}">{{ c.l2_zh }}</span>{% endif %}<a href="#t{{ c.n }}">回到全文</a></h3>
+<div><span class="k">原文片段：</span>{{ c.raw }}</div>
+{% if c.kind == "STATUTE" %}
+<div><span class="k">法規／條號：</span>{{ c.law_name or "（無法判定）" }}{% if c.article %} 第 {{ c.article }} 條{% endif %}{% if c.paragraph %} 第 {{ c.paragraph }} 項{% endif %}{% if c.subparagraph %} 第 {{ c.subparagraph }} 款{% endif %}</div>
+{% if c.article_text %}<div class="k">現行條文：</div><blockquote>{{ c.article_text }}</blockquote>{% endif %}
+{% else %}
+<div><span class="k">法院／案號：</span>{{ c.court or "（未標示）" }} {{ c.year }} 年度{{ c.case_word }}字第 {{ c.case_no }} 號{% if c.doc_kind %}　{{ c.doc_kind }}{% endif %}{% if c.jid %}　<span class="k">裁判 ID：</span>{{ c.jid }}{% endif %}</div>
+{% if c.claim_sentence %}<div class="k">書狀主張句：</div><blockquote>{{ c.claim_sentence }}</blockquote>{% endif %}
+{% if c.evidence %}<div class="k">判決中最相關的段落（角色：{{ c.evidence_role_zh }}；與主張的關係：{{ c.evidence_relation_zh }}；信心 {{ "%.2f"|format(c.evidence.confidence) }}）：</div><blockquote>{{ c.evidence.passage }}</blockquote>{% endif %}
+{% endif %}
+</div>
+{% else %}<p>未偵測到引用。</p>{% endfor %}
+
+{% if r.warnings %}<h2>四、警告</h2><ul>{% for w in r.warnings %}<li class="warn">{{ w }}</li>{% endfor %}</ul>{% endif %}
+
+<h2>{{ "五" if r.warnings else "四" }}、資料涵蓋範圍</h2>
+<ul>
+<li>法規資料日期：{{ cov.laws_update_date or "—" }}（僅含現行中央法規）</li>
+<li>判決資料：最高法院民事，共 {{ cov.judgment_count }} 筆；案號年度 {{ cov.judgment_year_min or "—" }} 至 {{ cov.judgment_year_max or "—" }}；裁判日期 {{ cov.judgment_date_min or "—" }} 至 {{ cov.judgment_date_max or "—" }}</li>
+</ul>
+
+<footer>{{ disclaimer }}</footer>
+</main>
+</body>
+</html>

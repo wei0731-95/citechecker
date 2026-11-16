@@ -1,0 +1,31 @@
+[project]
+name = "citecheck"
+version = "0.0.1"
+requires-python = ">=3.11"
+dependencies = [
+  "typer",
+  "pydantic>=2",
+  "python-docx",
+  "rank-bm25",
+  "jinja2",
+  "anthropic",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+citecheck = "citecheck.cli:app"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+citecheck = ["templates/*.j2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

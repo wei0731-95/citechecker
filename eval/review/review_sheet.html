@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>測試集複核表</title>
+<style>
+:root{--bg:#fff;--fg:#1f2328;--muted:#656d76;--line:#d0d7de;--card:#f6f8fa;--hi:#fff3b0}
+@media (prefers-color-scheme:dark){:root{--bg:#14171a;--fg:#e6e8ea;--muted:#9aa4ad;--line:#343b42;--card:#1c2126;--hi:#5a4b10}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 "Noto Sans TC","Microsoft JhengHei",sans-serif}
+main{max-width:900px;margin:0 auto;padding:20px 16px 80px}
+h1{font-size:1.4rem} h2{font-size:1.1rem;margin-top:32px;border-bottom:1px solid var(--line)}
+.guide{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 16px}
+.q{border:1px solid var(--line);border-radius:6px;padding:10px 16px;margin:14px 0}
+.q h3{margin:0 0 4px;font-size:1rem} .id{color:var(--muted);font-weight:400}
+.brief{background:var(--card);padding:8px 12px;border-radius:4px} mark{background:var(--hi);color:inherit}
+.opts label{display:block;padding:2px 0} .note{width:100%;box-sizing:border-box;margin-top:6px;padding:6px}
+details{border:1px solid var(--line);border-radius:6px;padding:6px 14px;margin:8px 0}
+summary{cursor:pointer;font-weight:600} details p{margin:.6em 0;white-space:pre-wrap;word-break:break-word}
+.bar{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 0;z-index:5}
+button,input[type=text].name{padding:6px 12px;font-size:1rem}
+</style></head><body><main>
+<h1>測試集複核表（共 25 題，獨立標註）</h1>
+<div class="bar">複核者姓名：<input class="name" type="text" id="reviewer" placeholder="請輸入">
+ <button id="export">完成後匯出答案（JSON）</button> <span id="count"></span></div>
+<div class="guide">
+<p><b>請先不要打開 eval/testset.jsonl 或 docs/TESTSET_STATUS.md</b>（裡面有我先前標的答案，看了就不是獨立標註）。答案會自動暫存在這個瀏覽器，關掉再開不會消失。</p>
+<p><b>做法：</b>每題看「書狀文字」，再展開被引用的判決全文，判斷書狀的那句話屬於下列哪一種。請依判決<u>全文</u>判斷，不要只看某一段。</p>
+<ul>
+<li><b>是最高法院自己的見解</b>：「本院判斷」部分明確表達了與書狀相同的法律見解或認定。</li>
+<li><b>只是當事人的主張</b>：書狀寫的是上訴人／被上訴人的說法，且最高法院沒有採納。</li>
+<li><b>只是原審的見解</b>：書狀寫的是原審（高等法院）的認定或見解，最高法院未採或已廢棄。</li>
+<li><b>相反</b>：書狀把最高法院的見解寫成相反的結論，且書狀文字並不是在複述某一造或原審的說法。</li>
+<li><b>找不到對應內容</b>：整份判決都沒有談到書狀這句話的內容。</li>
+</ul>
+<p>提醒：當最高法院明確駁斥某一造或原審的說法時，「只是當事人／原審的主張」與「相反」可能很接近，請依你的判斷選，並在備註寫下猶豫的原因，這正是要找出的題目定義問題。</p>
+</div>
+<h2>題目</h2>
+<section class="q" id="q-A01">
+<h3>第 1 題　<span class="id">A01</span></h3>
+<p class="brief">按委任契約建立在雙方信賴之上，不論有無報酬，任何一方都能隨時中止，即使雙方另有不得終止的約定，只要信賴基礎已經動搖，仍可依民法第549條第1項終止，<mark>最高法院115年度台上字第62號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j8" data-j="j8">最高法院115年度台上字第62號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="A01" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="A01" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="A01" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="A01" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="A01" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="A01" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-A01" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-A02">
+<h3>第 2 題　<span class="id">A02</span></h3>
+<p class="brief">按金錢債務遲延給付時，雙方約定的利率若沒有高過法定利率，債權人仍得請求依法定年息百分之五計算遲延利息，民法第二百三十三條第1項規定甚明，<mark>最高法院115年度台上字第874號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j11" data-j="j11">最高法院115年度台上字第874號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="A02" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="A02" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="A02" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="A02" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="A02" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="A02" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-A02" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-A03">
+<h3>第 3 題　<span class="id">A03</span></h3>
+<p class="brief">按當事人約定待日後不能之情形消除時才為給付者，在不能情形消除之前，債權人既不能請求履行，也不能以債務不履行為由請求損害賠償，民法第246條第1項但書可資參照，<mark>最高法院115年度台上字第219號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j5" data-j="j5">最高法院115年度台上字第219號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="A03" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="A03" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="A03" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="A03" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="A03" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="A03" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-A03" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-A04">
+<h3>第 4 題　<span class="id">A04</span></h3>
+<p class="brief">按法院審查外國法院確定判決是否違背我國公序良俗，應就該判決在個案中認事用法所得的結論判斷，並非針對該國立法制度本身，也不是重新檢視其事實認定對不對，<mark>最高法院114年度台上字第707號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j3" data-j="j3">最高法院114年度台上字第707號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="A04" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="A04" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="A04" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="A04" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="A04" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="A04" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-A04" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-A05">
+<h3>第 5 題　<span class="id">A05</span></h3>
+<p class="brief">按我國繼承採概括繼承、有限責任，繼承人如自願以自己的財產清償被繼承人的債務，法律並不禁止，這樣的清償結果不違背公共秩序或善良風俗，<mark>最高法院114年度台上字第707號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j3" data-j="j3">最高法院114年度台上字第707號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="A05" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="A05" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="A05" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="A05" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="A05" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="A05" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-A05" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-A06">
+<h3>第 6 題　<span class="id">A06</span></h3>
+<p class="brief">按重劃會選任理事、監事所需的同意比例，是指每一位理事或監事各自獲得同意的比例，不能用章程或選舉辦法降低，未達比例者除不成立外即屬無效，不因主管機關已核定而改變，<mark>最高法院115年度台上字第84號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j10" data-j="j10">最高法院115年度台上字第84號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="A06" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="A06" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="A06" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="A06" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="A06" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="A06" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-A06" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-A07">
+<h3>第 7 題　<span class="id">A07</span></h3>
+<p class="brief">按公務員怠於執行職務，只要其不作為使人民置身於不應存在的危險，因而大幅提高受害風險並終致實害，即有相當因果關係，不須是損害的唯一原因，縱有第三人行為介入亦同，<mark>最高法院114年度台上字第1286號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j1" data-j="j1">最高法院114年度台上字第1286號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="A07" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="A07" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="A07" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="A07" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="A07" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="A07" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-A07" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-A08">
+<h3>第 8 題　<span class="id">A08</span></h3>
+<p class="brief">按消費者保護團體依法受讓的，只限於消費者因企業經營者提供商品或服務所生的損害賠償請求權，不含對國家的國家賠償請求權，故讓與前者不影響國賠訴訟之提起，<mark>最高法院114年度台上字第1286號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j1" data-j="j1">最高法院114年度台上字第1286號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="A08" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="A08" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="A08" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="A08" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="A08" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="A08" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-A08" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-A09">
+<h3>第 9 題　<span class="id">A09</span></h3>
+<p class="brief">按雇主以勞工不能勝任工作為由終止契約，須已運用法律賦予的各種保護勞工手段仍無法改善、難再期待繼續僱用，倘尚有其他途徑，即不得採取終止契約的方式，<mark>最高法院115年度台上字第518號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j6" data-j="j6">最高法院115年度台上字第518號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="A09" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="A09" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="A09" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="A09" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="A09" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="A09" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-A09" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-A10">
+<h3>第 10 題　<span class="id">A10</span></h3>
+<p class="brief">按合資人得不附任何理由聲明退出合資，僅須意思表示到達他方即生通知效力，並於兩個月後發生退出效力，此為類推適用民法合夥規定的結果，<mark>最高法院115年度台上字第686號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j9" data-j="j9">最高法院115年度台上字第686號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="A10" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="A10" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="A10" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="A10" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="A10" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="A10" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-A10" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-B01">
+<h3>第 11 題　<span class="id">B01</span></h3>
+<p class="brief">按被上訴人未發生合約所定終止事由，卻以函文通知終止，不生終止效力，雙方合約關係仍然存續，上訴人得請求給付該期間的服務費，<mark>最高法院115年度台上字第62號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j8" data-j="j8">最高法院115年度台上字第62號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="B01" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="B01" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="B01" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="B01" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="B01" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="B01" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-B01" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-B02">
+<h3>第 12 題　<span class="id">B02</span></h3>
+<p class="brief">按出賣人把土地另行轉售他人而陷於給付不能，買受人得請求按起訴時的市價賠償損害，<mark>最高法院115年度台上字第219號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j5" data-j="j5">最高法院115年度台上字第219號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="B02" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="B02" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="B02" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="B02" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="B02" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="B02" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-B02" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-B03">
+<h3>第 13 題　<span class="id">B03</span></h3>
+<p class="brief">按日本國繼承法對繼承債務採無限責任，與我國概括繼承有限責任之基本原則相悖，日本法院據此作成的判決有背公序良俗，依民訴第402條第1項第3款不應許可執行，<mark>最高法院114年度台上字第707號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j3" data-j="j3">最高法院114年度台上字第707號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="B03" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="B03" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="B03" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="B03" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="B03" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="B03" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-B03" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-B04">
+<h3>第 14 題　<span class="id">B04</span></h3>
+<p class="brief">按自辦重劃的會員大會以無記名連記法、依得票多寡選出理事監事，只要參與選舉的會員達法定比例即符合規定，不須每位理監事都取得該比例的同意，<mark>最高法院115年度台上字第84號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j10" data-j="j10">最高法院115年度台上字第84號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="B04" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="B04" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="B04" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="B04" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="B04" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="B04" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-B04" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-B05">
+<h3>第 15 題　<span class="id">B05</span></h3>
+<p class="brief">按消費者已將損害賠償請求權讓與消保團體者，不得再就同一事故對國家提起國賠訴訟，否則有違一事不再理原則，也欠缺權利保護必要，<mark>最高法院114年度台上字第1286號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j1" data-j="j1">最高法院114年度台上字第1286號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="B05" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="B05" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="B05" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="B05" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="B05" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="B05" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-B05" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-C01">
+<h3>第 16 題　<span class="id">C01</span></h3>
+<p class="brief">按企業對考核不合格的員工，只要經主管進行三個月的定期檢討會議仍未改善，即得以不能勝任工作終止僱傭關係，不違反解僱最後手段性原則，勞基法第11條第5款可資參照，<mark>最高法院115年度台上字第518號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j6" data-j="j6">最高法院115年度台上字第518號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="C01" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="C01" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="C01" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="C01" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="C01" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="C01" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-C01" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-C02">
+<h3>第 17 題　<span class="id">C02</span></h3>
+<p class="brief">按附停止條件的將來債權讓與，須待債務人收到讓與通知時，受讓人才取得該債權，故在通知前的抵押權確定期日，受讓人對債務人並無債權存在，<mark>最高法院114年度台上字第2133號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j2" data-j="j2">最高法院114年度台上字第2133號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="C02" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="C02" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="C02" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="C02" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="C02" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="C02" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-C02" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-C03">
+<h3>第 18 題　<span class="id">C03</span></h3>
+<p class="brief">按再審之訴縱使法院已調閱前案卷宗、審查再審證據並認定事實，仍可認為顯無理由，不經言詞辯論即以判決駁回，<mark>最高法院115年度台上字第567號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j7" data-j="j7">最高法院115年度台上字第567號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="C03" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="C03" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="C03" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="C03" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="C03" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="C03" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-C03" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-C04">
+<h3>第 19 題　<span class="id">C04</span></h3>
+<p class="brief">按當事人手機老舊故障、對話訊息動輒數十萬則，難以強求其在前案審理時知悉特定對話紀錄，事後送修才發現者，即符合發現未經斟酌證物的再審事由，<mark>最高法院115年度台上字第1079號判決</mark>意旨參照。此類再審之訴依民事訴訟法第496條第1項第13款提起，並依同法第505條準用各審級程序。</p>
+<p class="ref">被引用的判決：<a href="#j4" data-j="j4">最高法院115年度台上字第1079號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="C04" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="C04" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="C04" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="C04" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="C04" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="C04" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-C04" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-C05">
+<h3>第 20 題　<span class="id">C05</span></h3>
+<p class="brief">按合資人以函文表示終止授權對方處理投資事務，並未明示退出合資，仍不得認已通知退出合資關係，合資契約繼續存在，對方仍應協同結算，<mark>最高法院115年度台上字第686號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j9" data-j="j9">最高法院115年度台上字第686號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="C05" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="C05" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="C05" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="C05" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="C05" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="C05" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-C05" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-D01">
+<h3>第 21 題　<span class="id">D01</span></h3>
+<p class="brief">按委任契約如另有不得終止之特約，即使雙方信賴關係已經動搖，委任人仍受特約拘束，不得依民法第549條第1項隨時終止，<mark>最高法院115年度台上字第62號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j8" data-j="j8">最高法院115年度台上字第62號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="D01" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="D01" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="D01" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="D01" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="D01" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="D01" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-D01" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-D02">
+<h3>第 22 題　<span class="id">D02</span></h3>
+<p class="brief">按重劃會選任理事、監事所需同意比例，得以章程或選舉辦法調降，未達法定比例的選任決議仍然有效，且經主管機關核定後即不得再爭執，<mark>最高法院115年度台上字第84號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j10" data-j="j10">最高法院115年度台上字第84號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="D02" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="D02" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="D02" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="D02" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="D02" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="D02" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-D02" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-D03">
+<h3>第 23 題　<span class="id">D03</span></h3>
+<p class="brief">按公務員怠於執行職務須為損害發生之唯一原因，才與損害有相當因果關係，如有第三人行為介入成為共同原因，即不成立國家賠償責任，國家賠償法第2條第2項規定可資參照，<mark>最高法院114年度台上字第1286號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j1" data-j="j1">最高法院114年度台上字第1286號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="D03" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="D03" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="D03" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="D03" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="D03" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="D03" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-D03" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-E01">
+<h3>第 24 題　<span class="id">E01</span></h3>
+<p class="brief">按消滅時效完成後，債務人得拒絕給付，法院不得依職權援用時效利益，<mark>最高法院115年度台上字第874號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j11" data-j="j11">最高法院115年度台上字第874號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="E01" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="E01" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="E01" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="E01" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="E01" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="E01" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-E01" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section><section class="q" id="q-E02">
+<h3>第 25 題　<span class="id">E02</span></h3>
+<p class="brief">按勞工因事業單位歇業而被資遣，資遣費應以平均工資為基礎，依工作年資每滿一年發給一個月，<mark>最高法院115年度台上字第1079號判決</mark>意旨參照。</p>
+<p class="ref">被引用的判決：<a href="#j4" data-j="j4">最高法院115年度台上字第1079號判決（展開全文）</a></p>
+<div class="opts"><label><input type="radio" name="E02" value="COURT_HOLDING"> 是最高法院自己的見解</label><label><input type="radio" name="E02" value="PARTY_ARGUMENT"> 只是當事人（上訴人／被上訴人）的主張，最高法院未採</label><label><input type="radio" name="E02" value="LOWER_COURT_VIEW"> 只是原審（第二審）的見解，最高法院未採或已廢棄</label><label><input type="radio" name="E02" value="CONTRADICTED"> 書狀的結論與最高法院自己的見解相反（不是在複述某一造的主張）</label><label><input type="radio" name="E02" value="NOT_IN_JUDGMENT"> 判決中找不到對應的內容</label><label><input type="radio" name="E02" value="UNSURE"> 無法判斷</label></div>
+<input class="note" type="text" name="note-E02" placeholder="備註（選填，例如覺得題目有問題的地方）">
+</section>
+<h2>判決全文</h2>
+<details id="j1"><summary>最高法院114年度台上字第1286號判決（主文與理由全文）</summary><p>上訴駁回。</p>
+<p>第三審訴訟費用由上訴人負擔。</p>
+<p>一、本件上訴人交通部觀光署(下稱觀光署）之法定代理人，於民國114年6月19日變更為陳玉秀，有交通部函、總統府秘書長錄令通知在卷可稽，其聲明承受訴訟，應予准許，合先敘明。</p>
+<p>二、被上訴人主張：如原判決附表(下稱附表)一②欄所示被害人(下合稱被害人)，於104年6月27日參加由訴外人瑞博國際整合行銷有限公司(下稱瑞博公司，實際負責人呂忠吉)向訴外人八仙樂園育樂股份有限公司(下稱八仙公司)承租其所經營之八仙樂園「快樂大堡礁」等區域舉辦之「彩色派對-八仙水陸戰場(Color Play Party)」(下稱系爭派對)。系爭派對於當日下午8時31分在「快樂大堡礁」(下稱系爭違建設施)區域發生粉塵爆炸燃燒(下稱系爭塵爆事故)。觀光署所屬公務員，對八仙公司違規營業開放系爭違建設施供民眾使用，長期怠於依發展觀光條例第37條、第54條第1項、觀光遊樂業管理規則(下稱觀光管理規則)第37條第1至3項規定執行其職務；上訴人新北市政府所屬公務員，明知系爭違建設施未取得雜項執照違規建於農業區，長期怠於依都市計畫法第79條第1項、建築法第86條第2款及觀光管理規則第37條第1至3項規定執行其職務，亦未陳報觀光署，使被害人因系爭塵爆事故受有如附表一③欄所示傷害，終至於附表一④欄所示時間死亡。被上訴人分別為被害人之父母(詳如附表一⑤⑥欄所示)，得請求上訴人賠償損害。爰依國家賠償法(下稱國賠法)第2條第2項後段、第5條，民法第194條規定，求為命觀光署及新北市政府各給付伊各新臺幣(下同)300萬元本息，如任一人已為給付，其餘人同免其責之判決(未繫屬本院部分，茲不予贅述)。</p>
+<p>三、上訴人答辯如下：</p>
+<p>㈠觀光署以：伊依規定得裁量決定督導查核期日、實施方式及處分內容，認定違規情節是否重大具判斷餘地，經定期或不定期檢查八仙樂園未發現違法經營，認無罰鍰或命其停止營業必要，未怠於執行職務。系爭違建設施非觀光遊樂業之核照範圍，系爭派對之舉辦亦非審查督導範圍。系爭塵爆事故及損害發生，係八仙公司違規將系爭違建設施區域出租於瑞博公司舉辦系爭派對所致，非系爭違建設施本身欠缺安全性或該土地建物使用不當所致，且此與系爭塵爆事故致被害人受害結果間，不具相當因果關係。被上訴人已將損害賠償請求權讓與訴外人財團法人中華民國消費者文教基金會(下稱消基會)，其提起本件訴訟有違一事不再理原則或無權利保護必要。又被害人均為成年人，其等參加系爭派對應先行了解派對之危險性及活動地點之逃生動線卻未為之，與有過失，應予酌減賠償金額等語置辯。</p>
+<p>㈡新北市政府以：伊事前不知系爭派對即將在系爭違建設施舉辦，且依法無須向伊申請，伊縱未依觀光管理規則第37條第1項實施檢查，亦無怠於執行職務可言。且依該條所為檢查，不及於遊樂設施的場地將舉辦何種活動，不得令公務員主動注意、監督上情，伊對系爭塵爆事故之發生，無預見可能性。系爭違建設施非觀光署核定之觀光遊樂設施，其興建時坐落之土地非屬農業區，亦未違都市計畫法，不符合游泳池定義，無須申請雜項執照，且水池處於未使用狀態，無處分命其停止使用之必要。伊雖派員督導八仙公司自辦緊急救難及醫療系統演習，僅就園區對外出入口是否太少、救難路線是否過遠、通道是否過窄而命其改善，非必然能避免本件被害人死亡結果發生。系爭塵爆事故發生原因與系爭違建設施是否違反土地使用規定或未取得雜項執照無涉，伊縱有怠於執行職務情事，亦與被害人死亡間無相當因果關係等詞，資為抗辯。</p>
+<p>四、原審廢棄第一審所為駁回被上訴人請求上訴人各給付300萬元本息之訴，改判被上訴人勝訴，其理由如下：</p>
+<p>㈠被害人均參加系爭派對，因系爭塵爆事故，受有如附表一③欄所示之傷勢，經送醫均因傷重不治死亡，被上訴人各為被害人之父母。</p>
+<p>㈡系爭違建設施係未經核准而擅自經營之設施，八仙公司將之提供遊客使用。觀光署自95年間起多次督導考核檢查八仙樂園，可知其實際經營樂園之總面積高於核可範圍面積達2倍以上，且有上開違建設施存在，並於95至97年、100年、102至103年間多次檢查中，將之列為「應立即改進事項」，惟八仙公司並未改善，觀光署未依發展觀光條例第54條第1項規定，就其上開違規情事為裁處罰鍰、定期停止營業、甚至廢止營業執照等行政處分，長期任令其持續存在並供遊客使用，觀光署之行政裁量應已限縮至無不作為之餘地，有怠於執行職務情事。</p>
+<p>㈢新北市政府為八仙樂園之地方主管機關。觀光署歷年定期檢查均會副知新北市政府，且於95至99年間亦均會同新北市政府所屬公務員至八仙樂園實施檢查，並製發檢送觀光遊樂業經營管理與安全維護檢查暨督導考核競賽評分紀錄表予新北市政府。新北市政府已知八仙樂園內存在系爭違建設施對外營業情事，惟自98至103年間就八仙樂園之歷次考核競賽資料，於「觀光遊樂設施安全」項下，僅重複記載「現場勘查禁止使用標誌尚稱明顯」、「水上遊樂設施尚未開放使用」等語，長期未依觀光管理規則第37條第2項規定執行職務，任令其繼續存在使用。且系爭違建設施坐落之土地，自98年間劃為都市計畫農業區，該設施並未農用且無法因變更使用用途而合法，新北市政府卻未依都市計畫法第79條第1項規定，裁處八仙公司罰鍰並勒令拆除、改建、停止使用或恢復原狀，及依建築法第86條第2款規定，對之處以罰鍰並勒令停止使用。系爭違建設施繼續存在，隨著設施老舊，對使用設施民眾之生命、身體及財產造成危難之發生機率逐年遞增，八仙公司仍不定時對外供遊客使用，實具發生危險之迫切性，且其危險僅能由新北市政府所屬公務員始能杜絕，新北市政府長期不執行上開法規，自有怠於執行職務情事。</p>
+<p>㈣系爭塵爆事故發生係因八仙公司違法將八仙樂園中包括系爭違建設施在內之區域分割出租予瑞博公司，方使系爭派對得以舉辦。系爭塵爆事故發生後，觀光署以八仙公司違法出租行為違反觀光管理規則第23條第1項規定，命八仙公司立即停止營業至所有調查釐清及缺失改善為止，可認觀光署非有不得執行職務情事。而訴外人玩色創意國際有限公司(下稱玩色公司)於系爭派對前1年亦曾於八仙樂園內舉辦「ColorPlay萬人彩色派對」，經由新聞媒體報導，觀光署自可得知八仙公司曾將園區內遊樂設施分割出租予該主辦單位之違法情事。內政部於系爭塵爆事故發生後亦函公告謂：於公共場所或公眾得出入之場所辦理運動、休閒活動或其他聚眾活動時，噴放（灑）可燃性微細粉末之行為，為消防法第14條易致火災之行為，主管機關應不予許可等語，堪認上訴人均確有怠於執行職務情事，且長期任令該違法狀態存在並從事非法使用。若上訴人於系爭塵爆事故發生前落實前開法規義務而未怠於執行職務，瑞博公司即無從因舉辦系爭派對活動致生系爭塵爆事故，是系爭塵爆事故之發生，固直接肇因於現場懸浮於空氣中之粉塵遇適切熱源發生暴燃而釀成，惟上訴人前開怠於執行職務所為與系爭塵爆事故之發生間，亦具有相當因果關係，應負損害賠償責任。</p>
+<p>㈤從而，被上訴人依國賠法第2條第2項後段、第5條及民法第194條規定，請求上訴人分別賠償被上訴人精神慰撫金各300萬元，如任一上訴人為給付，他上訴人於其給付範圍內免給付義務，為有理由，應予准許。</p>
+<p>五、本院之判斷：</p>
+<p>㈠程序部分：</p>
+<p>⒈按公務員怠於執行職務，致人民自由或權利遭受損害者，被害人得依國賠法第2條第2項後段規定，請求國家機關賠償損害，乃基於國賠法之特別規定，與消費者因使用或接受企業經營者違反消費者保護法(下稱消保法)第7條規定所提供之商品或服務受有損害，得依同條第3項規定，請求該企業經營者賠償損害之權利，二者負賠償責任之對象及其請求權之構成要件均有不同，縱因相關法律關係之偶然競合，對於被害人負有同一目的給付(賠償)之債務，僅生不真正連帶債務關係，並非同一權利。消費者保護團體依消保法規定所得受讓消費者之損害賠償請求權，僅限消費者使用或接受企業經營者所提供之商品或服務致受損害之賠償請求權，不包括基於國賠法對國家之賠償請求權，此觀之消保法第50條第1項規定自明。</p>
+<p>⒉查被上訴人業將其等因接受系爭派對活動所提供之服務及商品受損害之消費爭議所涉相關賠償義務人之全部損害賠償請求權讓與消基會，有請求權讓與書可稽(見一審卷七168、169、173至176、180頁)，復為兩造所不爭執。消基會基此所受讓者，乃係被上訴人對企業經營者(瑞博公司、玩色公司、八仙公司及呂忠吉等人)之損害賠償請求權，消基會另提之訴訟亦為消保法規定之消費訴訟，是被上訴人確未將國家賠償請求權一併讓與消基會甚明。上開消費訴訟與國家賠償訴訟並非同一事件，被上訴人縱將消費爭議之損害賠償請求權讓與消基會，亦不影響國家賠償訴訟之起訴，被上訴人提起本件訴訟未違反一事不再理原則，亦非無權利保護必要。</p>
+<p>㈡實體部分：</p>
+<p>⒈按現今社會，保障人民自由與權利，係國家存在之意義與目的，我國憲法第8條以下明文規定課予國家對人民自由與權利之保護義務，第24條規定當公務員違法侵害人民自由或權利，被害人民得向國家請求賠償損害。公務員執行職務係代表國家為之，其違法執行職務即為國家之違法行為，責任主體為國家，是國賠法規定之國家賠償責任，係國家為自己行為負責，即所謂國家自己責任，其成立有獨立之要件，不以公務員成立侵權行為責任為先決條件，性質上非純屬民事損害賠償責任而具公法性格，乃特殊侵權行為法。國家責任成立及其範圍之判斷基準不以國賠法為唯一依據，憲法課予國家對人民應承擔之職責義務亦屬之，並透過各種法規命令頒布施行，使抽象意義之職責義務具體化、現實化。惟國家義務包羅萬象，隨國家整體發展、資源條件等因素，國家義務違反責任、法治國原理，而以法規範明確之，是國賠法第2條之賠償責任，即係國家憲法義務違反時責任之具體規範。</p>
+<p>⒉又法規之內容非僅屬授予國家機關推行公共事務之權限，而其規定目的係為保障人民生命、身體及財產法益，且已明確國家機關應執行一定之職務義務，行政裁量若已限縮至無不作為之裁量餘地，且該機關之不作為與人民自由或權利遭受損害間具有相當因果關係者，除逾人力所能防免者外，國家機關因所屬公務員怠於採取積極措施，因而造成之損害，即應依該條規定負賠償責任。公務員怠於執行職務與人民自由或權利受有損害間因果關係之存否，應按個案具體呈現之各種客觀事實，依一般人智識經驗為判斷，苟公務員怠於執行職務之結果，係導致人民置身於文明社會中所不應存在危險之關鍵因素，或因此大幅增加人民自由或權利有受侵害之危險，該危險終竟轉為實害者，應認該怠於執行職務與損害間有相當因果關係，不以該公務員怠於執行職務為損害發生之唯一原因，縱有自然災害、被害人自己或第三人之行為介入而為損害發生之共同原因，亦不影響該因果關係的存在。</p>
+<p>⒊原審合法認定系爭違建設施未經核准擅自經營，確有開放供遊客使用。觀光署自95年間起已知八仙公司經營遊樂園之營業面積逾核准面積2倍以上，園區內有系爭違建設施存在，於95、97、100、102、103年間多次行業務督導考核檢查，僅將之列為應立即改善項目，於八仙公司經數年經檢查均未改善時，卻長期未依發展觀光條例第54條第1項規定，對之裁處罰款、定期停止營業、甚至廢止營業執照等處分，以防止系爭違建設施在特定情況下，對特定之人生命、身體或財產產生危險，而八仙公司未經觀光署同意即將含系爭違建設施在內之區域分割而出租予瑞博公司，違反觀光管理規則第23條第1項規定，於系爭塵爆事故發生後，觀光署隨即命其停止營業並處罰鍰5萬元確定，可知非不能依法執行職務，然觀光署長期任令前開違法狀態存在，並由八仙公司提供遊客使用，怠於執行前開職務。新北市政府係八仙公司之地方主管機關，應依觀光管理規則第37條規定督導八仙公司之旅遊安全維護等事項，曾多次會同觀光署對八仙樂園實施檢查，知悉系爭違建設施存在，未落實前開規定令八仙公司改善缺失，並依同條第2項規定，採行限期改善，未經複檢合格前不得使用之明確處置或陳報觀光署而為適當處分，任由系爭違建設施繼續存在，且明知系爭違建設施非供農業使用，自98年12月31日起應適用都市計畫法規定，所坐落土地無法變更為遊憩區使用用途，卻未依都市計畫法第79條第1項規定，裁處罰鍰並勒令拆除、改建、停止使用或恢復原狀，復未依建築法第86條第2款規定，處以罰鍰並勒令停止使用，長期容任系爭違建設施繼續存在，且因時間經過而老舊，未經確實安全檢查，將對使用者之生命、身體及財產逐年遞增其使用上之危險，亦屬怠於執行職務。瑞博公司利用系爭違建設施作為系爭派對之舞池，因設施低窪且深度達170公分，形同半封閉狀態，往舞池區噴灑色粉使之充滿粉塵，若經引燃，在舞池區延燒，火勢不易擴散，大幅增加人民生命、身體健康受侵害之危險，若上訴人落實執行職務，於八仙公司並未改善時即勒令拆除或停用，前開危險狀態將不至發生。故而，系爭塵爆事故之發生，固直接肇因於粉塵遇熱源發生爆燃所釀成，惟上訴人長期怠於執行職務，致使系爭違建設施持續存在，並因八仙公司非法分租使得瑞博公司舉辦系爭派對，均為系爭塵爆事故發生之原因之一，上訴人怠於執行職務與系爭塵爆事故間具有相當因果關係。被上訴人分別為被害人之父或母，得依國賠法第2條第2項後段、第5條，民法第194條規定，請求上訴人賠償精神慰撫金等詞。原審因以上開理由為上訴人敗訴之判決，於法核無違誤。</p>
+<p>㈢上訴論旨，就原審取捨證據、認定事實之職權行使暨贅述而與判決結果無涉之理由，指摘原判決不當，聲明廢棄，非有理由。末查，系爭違建設施對使用者有生命、身體及財產危險之情形，民眾非經主管機關建管、消防、衛生、環保、觀光安全等相關主管機關檢查並公告，無從得知，被害人參加系爭派對難認係自甘冒險行為，非對其等所受損害之發生與有過失，原審未依民法第217條規定酌減上訴人之賠償金額，自無違誤；當事人在第三審不得提出新攻擊防禦方法，上訴人於第三審程序主張臺灣士林地方法院105年度消字第7號請求損害賠償等事件，有部分被害人在第二審成立訴訟上和解，若經部分清償者，應駁回已受清償部分金額等語，並提出司法院裁判書系統裁判查詢書面為證，核屬新防禦方法及新證據，依民事訴訟法第476條第1項規定，本院無從審酌。均附此敘明。</p>
+<p>六、據上論結，本件上訴為無理由。依民事訴訟法第481條、第449條第1項、第78條，判決如主文。</p></details><details id="j2"><summary>最高法院114年度台上字第2133號判決（主文與理由全文）</summary><p>原判決廢棄，發回臺灣高等法院臺中分院。</p>
+<p>一、被上訴人主張：伊於民國100年4月11日提供如原判決附表(下稱附表)一所示土地（下稱系爭土地），為上訴人辦理擔保債權確定期日為100年8月31日，擔保債權總金額新臺幣（下未註明幣別者同）1,100萬元之最高限額抵押權（下稱系爭抵押權）設定登記，並簽發如附表二所示本票（下稱系爭本票）予上訴人。惟伊與上訴人並無任何債權債務關係，該抵押權登記應予塗銷。詎上訴人以伊任職之訴外人○○甲○橡膠廠有限公司(下稱甲○公司)積欠訴外人○○乙○工業有限公司（下稱乙○公司）貨款債務為由，向臺灣彰化地方法院（下稱彰化地院）聲請裁定准予拍賣抵押物，經該院以103年度司拍字第12號裁定（下稱拍賣抵押物裁定）准許後，執以聲請強制執行拍賣系爭土地，彰化地院以103年度司執字第16614號拍賣抵押物強制執行（下稱系爭執行)事件受理，該執行程序應予撤銷等情，求為確認上訴人就系爭抵押權所擔保之債權及系爭本票債權均不存在，及依民法第767條第1項中段及強制執行法第14條第2項規定，求為命上訴人塗銷系爭抵押權登記，及系爭執行程序應予撤銷之判決。</p>
+<p>二、上訴人則以：被上訴人因向乙○公司訂貨，為擔保貨款之清償，由伊、乙○公司與被上訴人簽訂貨款擔保契約書（下稱系爭擔保契約），被上訴人同時簽發系爭本票及設定系爭抵押權予伊，承諾依限清償對乙○公司之貨款債務，伊已受讓乙○公司對被上訴人之貨款債權(含違約金)，對被上訴人有系爭本票及系爭抵押權所擔保之債權存在，得實行抵押權；系爭執行程序業因伊承受系爭土地而終結，被上訴人不得提起債務人異議之訴等語，資為抗辯。</p>
+<p>三、原審廢棄第一審所為上訴人勝訴之判決，改判如被上訴人之聲明，係以：乙○公司、上訴人及被上訴人於100年4月7日簽立系爭擔保契約，被上訴人簽發系爭本票交付上訴人，並於同年4月11日以系爭土地為上訴人設定系爭抵押權。上訴人執拍賣抵押物裁定，聲請彰化地院以系爭執行事件，拍賣系爭土地，經特別拍賣後之減價拍賣程序，因無人應買，由上訴人於103年10月21日承受。被上訴人提起本件債務人異議之訴，並聲請彰化地院以103年度聲字第92號裁定准其供擔保後停止強制執行程序，系爭執行程序尚未終結，為兩造所不爭執。次查系爭抵押權設定契約書、他項權利證明書，所載之義務人兼債務人為被上訴人，抵押權人為上訴人，所擔保者為被上訴人對上訴人現在（包括過去所負現在尚未清償）及將來在本抵押權設定契約書所定最高限額內所負之債務，包括借款、票據、保證、墊款等。依系爭擔保契約第1、2條之約定，被上訴人係為擔保其向乙○公司購買貨物之價款及因此衍生之款項，而提供系爭土地設定系爭抵押權及簽發系爭本票予上訴人，系爭抵押權擔保範圍及於被上訴人對上訴人所負於最高限額內之系爭本票債務，債權確定期日為100年8月31日。系爭擔保契約第3條約定，被上訴人如屆期未給付貨款，上訴人即可依系爭擔保契約約定，強制執行被上訴人所有財產，以代清償。核屬乙○公司與上訴人間將來債權讓與之約定，該債權讓與附有「被上訴人屆期未完全清償貨款」之停止條件，則上訴人須於停止條件成就，對被上訴人再行通知，該債權讓與對被上訴人始生效力。被上訴人向乙○公司購買貨物之價款為人民幣170萬6,494.2元，嗣僅給付美金9萬元；另訴外人丙○○曾以甲○公司名義簽發之支票交付上訴人，並未兌現，足見系爭擔保契約之貨款債權未完全清償完畢。惟乙○公司及上訴人係於102年11月15日簽署債權讓與契約書，乙○公司將其對被上訴人之貨款債權人民幣201萬5,667元及「逾期以每萬元每日20元整計算」之違約金債權讓與上訴人，並於系爭抵押權擔保債權確定期日（100年8月31日）後之102年12月13日始對被上訴人為債權讓與之通知，上開未償之貨款債權即非系爭抵押權擔保範圍。在系爭抵押權所擔保債權確定期日100年8月31日，上訴人對被上訴人既無債權存在，被上訴人主張上訴人對伊之系爭本票債權不存在，亦屬有據。系爭抵押權於擔保債權確定日既無擔保債權存在，上訴人不得持拍賣抵押物裁定及系爭本票聲請對系爭土地強制執行，系爭執行事件所為強制執行程序應予撤銷。故被上訴人請求確認上訴人就系爭抵押權所擔保之債權及系爭本票債權均不存在，及依民法第767條第1項中段及強制執行法第14條第2項規定，請求上訴人塗銷系爭抵押權登記，及系爭執行程序應予撤銷，為有理由，均應准許等詞，為其判斷之基礎。</p>
+<p>四、按民法第294條所稱債權讓與乃以移轉債權為標的之契約，於讓與人與受讓人間之意思合致時，即生移轉債權之效力。其以將來發生之債權為讓與標的，約定將來債權於發生之同時或其後一定事實之到來生移轉之效力，亦非法所不許。債權之讓與，依民法第297條第1項本文之規定，非經讓與人或受讓人通知債務人，對債務人不生效力。旨在使債務人知有債權移轉之事實，免誤向原債權人清償。所謂不生效力，係指債務人如未及受讓與之通知，致仍向原債權人為清償，或有其他免責事由，其清償或免責之利益對於新債權人(受讓人)亦生效力，要與業經讓與之債權何時變更其債之主體無涉。乙○公司、上訴人及被上訴人簽訂系爭擔保契約，由被上訴人簽發系爭本票及提供系爭土地設定系爭抵押權予上訴人，供為乙○公司對被上訴人將來所生貨款債權(下稱系爭貨款債權)、逾期付款之違約金債權(下合稱系爭將來債權)之擔保；乙○公司將系爭將來債權讓與上訴人，以「被上訴人屆期未完全清償」為停止條件；嗣被上訴人就其積欠乙○公司之貨款未完全清償，為原審認定之事實。則被上訴人何時受債權讓與之通知，是否知有債權移轉之事實，與上訴人有否於何時受讓取得系爭本票債權及系爭抵押權擔保之債權，其數額若干，係屬二事，應分別以觀。原審見未及此，未查明系爭貨款債權何時發生、何時屆清償期限、被上訴人未清償之數額及應否計付違約金等情，據以認定系爭本票債權及系爭抵押權擔保之債權存否及其數額，遽謂被上訴人於102年12月13日始受債權讓與之通知，在系爭抵押權所擔保債權確定期日100年8月31日，上訴人對被上訴人無債權存在，進而為上訴人不利之判決，自有可議。上訴論旨，指摘原判決違背法令，求予廢棄，非無理由。</p>
+<p>五、據上論結，本件上訴為有理由。依民事訴訟法第477條第1項、第478條第2項，判決如主文。</p></details><details id="j3"><summary>最高法院114年度台上字第707號判決（主文與理由全文）</summary><p>上訴駁回。</p>
+<p>第三審訴訟費用由上訴人負擔。</p>
+<p>一、本件被上訴人主張：伊與訴外人本方安雄於民國（下未註明者，均同）86年4月1日簽立消費借貸契約及債務確認書（下合稱系爭契約）。嗣本方安雄於105年3月12日死亡，上訴人為本方安雄以遺囑指定繼承全部財產之受遺贈人，其對伊提起確認系爭契約非真正之訴，伊乃以本方安雄負欠消費借貸債務為由，反訴請求上訴人清償借款，經日本國大阪高等裁判所（下稱大阪高裁）於令和3年5月27日以案件編號令和2年（ネ）第491號民事確定判決（下稱系爭判決），命上訴人給付伊日幣（下同）2億8,153萬8,288元。系爭判決並無民事訴訟法第402條第1項各款所列情事等情，依強制執行法第4條之1第1項規定，求為許可系爭判決為強制執行之判決。</p>
+<p>二、上訴人則以：被上訴人就本方安雄所遺債務為求償，未將其餘繼承人方純達、方明慧列為共同被告，系爭判決有當事人不適格之情形。日本國繼承法關於繼承債務之清償係採無限責任原則，與我國繼承法所採概括繼承有限責任之基本原則相悖，系爭判決之內容有背於我國公共秩序或善良風俗。日本國未有法令或條約承認我國法院判決，亦無承認我國裁判之實例，應認日本國拒絕承認我國裁判。依民事訴訟法第402條第1項第3、4款規定，不應承認及許可執行系爭判決等語，資為抗辯。</p>
+<p>三、原審以：本方安雄於105年3月12日死亡，其以遺囑指定上訴人繼承其全部財產。上訴人於日本國起訴求為確認系爭契約非真正，被上訴人反訴請求清償借款，經大阪高裁以系爭判決命上訴人給付2億8,153萬8,288元。系爭判決並無民事訴訟法第402條第1項第1、2款所列情事，為兩造所不爭執。次查上訴人不爭執其單獨繼承本方安雄所遺財產及債務，系爭判決自無當事人不適格之情。系爭判決就兩造之爭點，經斟酌相關證據調查結果及綜合全辯論意旨，認定：系爭契約屬實，被上訴人對本方安雄有2億8,153萬8,288元之借款（下稱系爭借款）債權存在，該借款請求權未罹於消滅時效；上訴人不能證明本方安雄不知情系爭借款債務而無意由上訴人繼承之特殊事由，且其係於展延繼承之猶豫期間後，始依遺囑繼承本方安雄之遺產，可推認上訴人已考量於繼承該遺產之狀況下，將承擔系爭借款債務，被上訴人訴請上訴人清償系爭借款，並無權利濫用情事；上訴人逾時提出以出資返還請求權與上開借款債權互為抵銷之防禦方法，應予駁回等詞，因而判命上訴人給付被上訴人系爭借款。而日本國民法之繼承制度係採概括繼承主義，惟亦賦予繼承人得於法定期間內選擇為繼承之單純承認、限定承認或拋棄繼承等方式，以保障其權利，且為確認被繼承人之財產狀況，允許繼承人於選擇前先行就繼承財產進行調查；該國最高裁判所並以解釋方式放寬選擇權行使期間之起算日，自繼承人認識所繼承財產之全部或部分的存在或通常可得認識其存在之時起算，給予因不諳法律規定而未能及時選擇者有得以救濟之途徑。上訴人係於展延繼承之猶豫期間後，始依遺囑繼承本方安雄之遺產，並以本方安雄之繼承人身分，委任律師對被上訴人提起確認系爭契約非真正之訴，被上訴人於該訴訟中始反訴請求清償系爭借款債務，足見上訴人並無不諳日本法律規定而未及限定承認或拋棄繼承之情，系爭判決命上訴人清償本方安雄所遺系爭借款債務，並無違背我國之公共秩序或善良風俗。又民事訴訟法第402條第1項第4款所稱相互承認，係指法院間相互承認裁判之互惠而言，要與國際法上之國家承認或政府承認無渉。日本國迄今無明示拒絕承認我國法院裁判之案例，有我駐日本代表處112年4月10日日領字第0000000000號函附卷可稽，難認系爭判決有民事訴訟法第402條第1項第4款之情事。故被上訴人依民事訴訟法第402條第1項、強制執行法第4條之1規定，求為許可系爭判決強制執行，為有理由，應予准許。爰維持第一審所為上訴人敗訴之判決，駁回其上訴。</p>
+<p>四、按我國法院就外國法院之確定判決許可執行之訴，審查該外國法院判決之內容有無民事訴訟法第402條第1項第3款所定「有背中華民國之公共秩序或善良風俗」之事由，旨在維護我國法秩序或倫理秩序之基本原則及理念，應依個案具體狀況判斷是否不認其效力。是其審查係以外國法院判決就該個案認事用法所為之論結內容為據，非以該外國之立法主義為對象，亦非就該判決之事實認定或法規適用有無違誤重新審究。又我國繼承制度係以概括繼承及有限責任為原則，故繼承債務仍為繼承之標的，僅繼承人對於繼承債務得拒絕以固有財產負清償責任，倘繼承人仍以其固有財產清償繼承債務時，該債權人於其債權範圍內受清償，並非無法律上之原因，此觀民法第1148條之規定及其立法理由自明。是繼承人選擇以其固有財產清償被繼承人之債務，非法所不許，自無違背我國公序良俗之可言。日本國民法繼承編第四章，明定繼承人得於知悉繼承開始3個月內，為繼承之單純承認（日民法第920條）、限定承認（日民法第922條）或拋棄繼承（日民法第938、939條）；繼承人為承認繼承或拋棄繼承前，得調查繼承財產，並得向家事裁判所聲請延長上開猶豫期間，未於上開期間內為限定承認或拋棄繼承者，始視為單純承認（日民法第915條、第921條）。而系爭判決認定上訴人係於展延繼承之猶豫期間後，經審慎考量始依遺囑繼承本方安雄之遺產，可推認其已考量於繼承該遺產之狀況下，將承擔與系爭借款等有關之債權債務，被上訴人訴請上訴人清償借款，無權利濫用情事，因而判命上訴人給付被上訴人2億8,153萬8,288元，有該判決可稽。原審因認上訴人經足夠時間之調查、考慮後，未為限定承認或拋棄繼承，仍決定依遺囑繼承而承擔本方安雄之債務，系爭判決之內容，並未違背我國公共秩序或善良風俗，爰維持第一審所為上訴人敗訴之判決，駁回其上訴，經核於法並無違誤。上訴論旨，指摘原判決違背法令，求予廢棄，非有理由。</p>
+<p>據上論結，本件上訴為無理由。依民事訴訟法第481條、第449條第1項、第78條，判決如主文。</p></details><details id="j4"><summary>最高法院115年度台上字第1079號判決（主文與理由全文）</summary><p>原判決廢棄，發回臺灣高等法院。</p>
+<p>一、本件被上訴人主張：兩造原為夫妻，於婚前民國98年4月26日共同購買臺北市○○區○○段○小段000地號土地（權利範圍：萬分之126）及其上同段0000建號建物（權利範圍：全部，下合稱系爭房地），約定應有部分各2分之1。因伊擬向服務醫院申請醫師職務宿舍，兩造乃約定將伊之應有部分（下稱系爭應有部分）借名登記於上訴人名下。伊於前訴訟程序提起預備合併之訴，先位依民法第179條、類推適用民法第541條第2項規定，請求上訴人將系爭應有部分移轉登記予伊，臺灣士林地方法院112年度重訴字第50號判決（下稱第一審判決），以伊未能證明兩造就系爭應有部分有借名登記關係存在為由，駁回伊此部分之訴。伊聲明不服，對之提起上訴，復經臺灣高等法院113年度重上字第524號、最高法院114年度台上字第1318號判決，維持第一審所為伊先位之訴敗訴之判決，駁回伊此部分上訴確定（下合稱原確定判決）。伊於前訴訟程序事實審言詞辯論終結後將伊之手機（下稱系爭手機）送修，發現系爭手機內存有家族群組105年10月27日及兩造間102年5月16日、105年10月27日之Line通訊軟體對話（下稱Line對話）紀錄（下分稱再證1、2、4，合稱系爭對話紀錄），該對話紀錄為原確定判決未經斟酌之證物，如經斟酌，伊就先位之訴可獲較有利之裁判等情，依民事訴訟法第496條第1項第13款規定，提起再審之訴，求為廢棄原確定判決，命上訴人將系爭應有部分移轉登記予伊之判決。</p>
+<p>二、上訴人則以：系爭手機於114年11月始發生問題，於此之前，被上訴人均正常使用，且系爭手機送修後僅需更換電池，與手機內部紀錄無關，系爭對話紀錄顯非被上訴人前訴訟程序事實審言詞辯論終結後始發現之證物。被上訴人於前訴訟程序已提出日期與再證1、4日期相距3日之105年10月24日、同年月30日對話紀錄，於另案請求離婚事件、返還不當得利事件亦提出105年5月28日、103年10月至105年10月間之對話紀錄，應無不能於前訴訟程序檢出使用系爭對話紀錄之情事，自不合民事訴訟法第496條第1項第13款所定再審事由等語，資為抗辯。</p>
+<p>三、原審廢棄原確定判決，命上訴人將系爭應有部分移轉登記予被上訴人，係以：系爭對話紀錄為系爭手機內所儲存102年5月16日、105年10月27日之Line對話紀錄，係前訴訟程序事實審言詞辯論終結前已存在之證物，為兩造所不爭執。次查㈠系爭手機為三星Note5機型，於114年6月12日因手機裝置之Line通訊軟體呈現略為操作即閃退自動關機狀態送修，經維修人員將一個元件拆除替換，處理手機黑屏開機問題後，被上訴人始發現再證4，嗣於114年11月1日因手機無法開機再度送修，經維修人員將組件更換，被上訴人再回溯發現再證1、2。兩造間彼此往來對話訊息高達數十萬則，尚難強求被上訴人於前訴訟程序清楚知悉對話紀錄存在時點，不得僅以被上訴人於前訴訟程序及另案請求離婚事件、返還不當得利事件提出105年10月24日、同年月30日、同年5月28日及103年10月至105年8月間之Line對話紀錄，即認被上訴人故意不提或怠於提出系爭對話紀錄，被上訴人主張其因系爭手機老舊、元件故障，不能於前訴訟程序事實審言詞辯論終結前將系爭對話紀錄檢出使用，應為可取。系爭對話紀錄攸關兩造是否合意各自擁有系爭房地應有部分2分之1，如經斟酌，被上訴人應可受較有利益之裁判，原確定判決有民事訴訟法第496條第1項第13款所定之再審事由。㈡觀諸再證1、4即家族群組、兩造間105年10月27日Line對話紀錄，足認兩造就系爭房地之產權分配，各自應有部分各2分之1，早已達成共識，為免被上訴人母親擔心，上訴人甚於兩造離婚後隔2日，向被上訴人家人表明系爭房地為兩造共有，各有應有部分2分之1，於被上訴人要求返還時，即會返還；再觀再證2即兩造間102年5月16日Line對話紀錄，益徵被上訴人主張其為符合職務宿舍之申請資格，以申請官舍供上訴人表妹等人居住，與上訴人協議將共同購買之系爭房地全部登記於上訴人名下，亦為可取。故被上訴人提起再審之訴，依民法第179條、類推適用民法第541條第2項規定，請求上訴人將系爭應有部分移轉登記予被上訴人，為有理由，應予准許等詞，為其判斷之基礎。</p>
+<p>四、經查：</p>
+<p>㈠按民事訴訟法第496條第1項第13款所謂當事人發見未經斟酌之證物，係指在前訴訟程序事實審之言詞辯論終結前，不知已有該證物之存在，其後始知之者而言。所謂得使用該證物，係指前訴訟程序事實審之言詞辯論終結前，雖知有該證物之存在，而因故不能使用，其後始得使用者而言。且當事人提起再審之訴，以發見未經斟酌或得使用之證物為理由者，就其在前訴訟程序不知或不能使用該證物之事實，應負舉證責任。被上訴人於前訴訟程序曾提出與再證1、4日期僅距3日之105年10月24日、同年月30日Line對話紀錄（見前訴訟程序二審卷一359頁以下、一審卷一96頁以下）；於另案請求返還不當得利事件第一審審理期間（111年12月至113年10月）亦提出103年10月至105年8月間多筆兩造間Line對話紀錄（見原審卷161頁以下）。果爾，能否謂被上訴人於前訴訟程序（111年11月至114年2月19日），不知系爭對話紀錄存在，或依當時情形不能將之檢出使用，即滋疑問。原審未詳予勾稽審究，且既認兩造間往來對話訊息高達數十萬則，被上訴人於前訴訟程序難以知悉系爭對話紀錄存在，乃未敘明被上訴人何以在前訴訟程序後訊息數量較前更增之情形下知悉系爭對話紀錄存在之認定理由及所憑依據，僅以系爭手機曾於114年6月12日、同年11月1日送修，遽謂被上訴人因系爭手機老舊、元件故障，不能於前訴訟程序事實審言詞辯論終結前將系爭對話紀錄檢出使用，進而認其提起再審之訴符合民事訴訟法第496條第1項第13款之再審事由，已有可議。</p>
+<p>㈡再審之訴，形式上雖為新訴之一種，實質上為前訴訟程序之再開或續行，如已備合法要件，並有再審理由，依民事訴訟法第505條規定，法院應準用關於各該審級訴訟程序之規定，按前訴訟程序終結時之程度繼續進行。原審既認被上訴人就先位之訴所提再審之訴合法，且有再審理由。乃未按前訴訟程序終結時之程度繼續進行第二審上訴程序，就第一審判決應否維持恝而不論，逕以之為新訴，命上訴人將系爭應有部分移轉登記予被上訴人，亦有未合。上訴論旨，指摘原判決違背法令，求予廢棄，非無理由。末查被上訴人於前訴訟程序係提起預備合併之訴，其備位之訴第二審判決經本院廢棄發回原法院審理中，案經發回，應併注意及之，附此敘明。</p>
+<p>三、據上論結，本件上訴為有理由。依民事訴訟法第477條第1項、第478條第2項，判決如主文。</p></details><details id="j5"><summary>最高法院115年度台上字第219號判決（主文與理由全文）</summary><p>上訴駁回。</p>
+<p>第三審訴訟費用由上訴人負擔。</p>
+<p>一、上訴人主張：伊父即訴外人洪木聯前於民國61年間與訴外人陳登簽訂買賣契約，向陳登購買重測前○○縣○○鄉○○○段○○小段29-190地號土地（下稱29-190地號土地，重測後為○○市○○區○○段000地號土地)中，如臺灣臺中地方法院(下稱臺中地院)109年度豐簡字第393號判決附圖所示，面積140.08平方公尺之土地(下稱系爭土地)，並約定如因政府法令規定無法辦理系爭土地移轉登記，則系爭土地應供洪木聯及其繼受人永久通行使用（下稱61年買賣契約）。訴外人即陳登繼承人陳麗屏於96年間將29-190地號土地出售予被上訴人，被上訴人以承諾書（下稱96年承諾書）承擔61年買賣契約之出賣人債務。被上訴人於101年間將29-190地號土地出售予訴外人溫王秋香而陷給付不能。洪木聯已將61年買賣契約、96年承諾書債權讓與伊，被上訴人自應按系爭土地於伊起訴時之市價新臺幣（下同）266萬9,645元賠償伊等情。爰依61年買賣契約、96年承諾書及民法第226條第1項規定，擇一求為命被上訴人給付伊266萬9,645元，及自起訴狀繕本送達翌日起按法定利率年息5%計算利息之判決。</p>
+<p>二、被上訴人則以：61年買賣契約及96年承諾書，均係以不能之給付為標的，應屬無效。伊書立96年承諾書係表示伊願意配合洪木聯辦理變更土地編定及移轉過戶，若無法辦理則將系爭土地供洪木聯及其繼受人永久通行使用。伊將29-190地號土地售予溫王秋香、溫王秋香轉售予訴外人邱榮家時，契約已載明溫王秋香、邱榮家應提供系爭土地供洪木聯及其繼受人通行，伊自未違反約定，上訴人亦未受有損害，上訴人提起本訴係濫用權利、違反誠信等語，資為抗辯。</p>
+<p>三、原審以：洪木聯於61年間向陳登買受系爭土地，雙方約定如因政府法令規定無法辦理系爭土地移轉登記，陳登應將系爭土地提供洪木聯通行使用。陳登繼承人陳麗屏於96年1月3日將29-190地號土地出售予被上訴人，被上訴人於同年5月21日以96年承諾書向洪木聯應允，於將來法令變更而得就29-190地號土地為分割時，將系爭土地移轉登記予洪木聯等情，為兩造所不爭。按以不能之給付為契約標的者，其契約為無效。但其不能情形可以除去，而當事人訂約時並預期於不能之情形除去後為給付者，其契約仍為有效，民法第246條第1項定有明文。61年買賣契約成立時，系爭土地雖因法令限制，無法辦理變更土地編定、分割及移轉登記事宜，惟買賣當事人陳登與洪木聯預期於不能之情形除去後為給付，並約定不能之情形除去前，陳登應將系爭土地供洪木聯及其繼受人永久通行，自屬有效。96年承諾書未表明被上訴人係繼受61年買賣契約之出賣人義務，且其內容載明配合洪木聯辦理土地變更、編定及分割等相關事宜，附註事項記明相關費用由洪木聯負擔，與61年買賣契約對洪木聯所負交付並使其取得系爭土地所有權之出賣人義務不同，難認被上訴人有承擔61年買賣契約出賣人陳登債務之意思。被上訴人依96年承諾書所負債務，係配合洪木聯辦理變更土地編定、分割事宜，洪木聯有先為給付之義務。上訴人自承系爭土地因屬農地無法分割，不符合辦理土地變更要件等語。29-190地號土地上有96年5月14日核發使用執照之合法農舍，被上訴人於同年5月21日簽署96年承諾書時，29-190地號土地早已整筆遭套繪管制，洪木聯應無法辦理變更系爭土地編定事宜，被上訴人自亦無從配合辦理。被上訴人取得29-190地號土地後，已將系爭土地提供洪木聯通行，嗣其將29-190地號土地移轉予溫王秋香、溫王秋香再將之移轉予邱榮家，邱榮家同意將系爭土地提供洪木聯通行使用，上訴人另案向邱榮家訴請確認對系爭土地有通行權存在，並於臺中地院110年度簡上字第51號和解成立，邱榮家同意容忍上訴人通行系爭土地，堪認被上訴人已依96年承諾書約定，提供系爭土地予洪木聯繼受人通行使用，96年承諾書復未禁止被上訴人出售29-190地號土地予他人，被上訴人無債務不履行情事。從而，上訴人依61年買賣契約、96年承諾書、民法第226條第1項之規定，請求被上訴人給付266萬9,645元本息，為無理由，不應准許。因而廢棄第一審所為上訴人勝訴之判決，駁回其於第一審之訴。</p>
+<p>四、本院之論斷：</p>
+<p>㈠按以不能之給付為契約標的者，其契約為無效。但其不能情形可以除去，而當事人訂約時並預期於不能之情形除去後為給付者，其契約仍為有效。民法第246條第1項定有明文。是以自始客觀給付不能之標的為給付之約定者，其契約本應為無效，雖當事人於締約時，主觀上預期僅為暫時不能而為上開但書之約定，其契約仍為有效，惟「預期於不能之情形除去後為給付」之契約，於不能之情形除去前，債權人不得據以對債務人為給付之請求，當然亦不得對債務人主張債務不履行之損害賠償。此與其履行繫於不確定事實到來之不確定期限債務，尚屬有別。</p>
+<p>㈡查29-190地號土地使用分區為特定農業區，使用地類別為農牧用地，有土地登記第二類謄本可稽(見一審卷第25頁)。系爭土地面積140.08平方公尺，未達89年1月26日修正農業發展條例第16條第1項所定分割後每宗耕地最小面積0.25公頃。原審合法認定被上訴人未承擔61年買賣契約債務，僅依96年承諾書對洪木聯負責。其於96年5月21日書立96年承諾書予洪木聯，表示若將來法令變更而得為分割登記時，其負有移轉系爭土地之義務，並為兩造所不爭(見原判決兩造不爭執事項㈡)。96年承諾書上開內容係就不能分割、移轉之耕地一部，預期於將來法令變更，得自29-190地號土地分割出系爭土地，不能情形之除去時為給付之約定。而上訴人於事實審自認：系爭土地目前仍不符辦理土地變更之要件，因為農地無法分割等語(見一審卷第203頁)，是移轉系爭土地客觀不能(法律不能)之情形，迄事實審言詞辯論終結前，猶無法除去，繼受洪木聯96年承諾書權利之上訴人自無從請求被上訴人履行，亦不得對之請求債務不履行之損害賠償。上訴人請求被上訴人賠償系爭土地給付不能之損害266萬9,645元本息，洵屬無據。</p>
+<p>㈢原審為上訴人敗訴之判決，理由雖有不同，結論並無二致，仍應維持。上訴論旨，指摘原判決違背法令，聲明廢棄，非有理由。</p>
+<p>五、據上論結，本件上訴為無理由。依民事訴訟法第481條、第449條第2項、第78條，判決如主文。</p></details><details id="j6"><summary>最高法院115年度台上字第518號判決（主文與理由全文）</summary><p>原判決廢棄，發回臺灣高等法院。</p>
+<p>一、本件上訴人主張：伊自民國111年8月1日起受僱於被上訴人，擔任資訊處開發部人資系統組專案組長，月薪新臺幣（下同）5萬1000元。伊無不能勝任工作情形，且被上訴人之改善輔導計劃有瑕疵，亦未安排相關教育訓練或先予降職或調動等其他措施，逕於112年10月26日終止兩造間僱傭契約，違反解僱最後手段性原則，自非合法等情。爰依民事訴訟法第247條第1項規定，兩造間契約約定，勞動基準法（下稱勞基法）第22條第2項、民法第487條、勞工退休金（下稱勞退金）條例第6條第1項、第14條第1項、第31條規定（下合稱系爭規定），求為㈠確認兩造間僱傭關係存在；並命㈡被上訴人自112年10月26日起至伊復職之前一日止，按月於當月20日給付5萬1000元，及加付自各期應給付日之翌日起算法定遲延利息，暨按月提繳3180元至伊在勞動部勞工保險局之勞工退休金專戶（下稱勞退專戶）之判決。</p>
+<p>二、被上訴人則以：上訴人成為正式職員後，工作態度消極，於後續評核不能勝任工作，經與其持續溝通未獲改善，伊乃於112年10月26日終止兩造間僱傭關係，應屬合法。況上訴人於資遣後7個月餘方申請勞資爭議調解，有權利失效情形。縱認兩造間僱傭關係存在，就上訴人已受領之資遣費5萬883元據以抵銷，另上訴人於他處服勞務所得薪資、勞退金亦應扣除等語，資為抗辯。</p>
+<p>三、原審維持第一審所為上訴人敗訴之判決，駁回其上訴，無非以：</p>
+<p>㈠上訴人於111年8月1日起受僱於被上訴人，擔任資訊處開發部人資系統組專案組長，月薪5萬1000元，被上訴人於112年10月17日通知被上訴人自同年月26日起終止僱傭關係之事實，為兩造所不爭執。上訴人主張兩造間僱傭關係仍存在，為被上訴人所否認，其提起本件確認之訴，有提起確認訴訟之法律上利益。</p>
+<p>㈡綜依被上訴人員工管理規則5.8.5及員工績效評核辦法第7章第1條第2項規定，員工連續二次考核評等加權後總評等低於3（不含）以下者，將送交人評會評議。評議結果為不適任者，將予以降職、調動或解職。上訴人擔任資訊處開發部人資系統組專案組長，為基層主管，應具備專案管理、資訊科技應有之思維及與需求單位暨主管間之協調溝通、資訊專業術語之掌握能力。其於111年下半年（評核區間為111年11月1日至112年4月30日）考核總分2.33，為不合格，經被上訴人自112年6月1日起至同年8月28日止施以改善輔導計畫，由上訴人之主管每兩週與其進行檢討會議，惟上訴人未積極配合改善專案組長應具備之主動性，亦無意配合被上訴人之組織規定，未能通過輔導考核，因以112年上半年（評核區間為112年5月1日至112年9月30日）考核總分2.28，仍不合格。則其客觀上能力未達工作需求而不適任，主觀上亦有怠忽、能為而不為，安排與主管為期3個月之深度會談後，仍無法改善，被上訴人依勞基法第11條第5款規定及工作規則之約定，終止兩造間僱傭關係，無違解僱最後手段性原則，應屬合法。從而，上訴人訴請確認兩造間僱傭關係存在；依兩造間契約約定及系爭規定，請求被上訴人自112年10月26日起按月給付薪資5萬1000元本息及提繳勞退金3180元至勞退專戶，非屬正當，不應准許等詞，為其判斷之基礎。</p>
+<p>四、本院判斷：</p>
+<p>㈠按勞基法第11條第5款規定，勞工對於所擔任之工作確不能勝任時，雇主得預告勞工終止勞動契約，揆其立法意旨，重在勞工提供之勞務，如無法達成雇主透過勞動契約所欲達成客觀合理之經濟目的，雇主始得解僱勞工，其造成此項合理經濟目的不能達成之原因，應兼括勞工客觀行為及主觀意志。是所稱「勞工對於所擔任之工作確不能勝任」，舉凡勞工客觀上之能力、學識、品行及主觀上違反忠誠履行勞務給付義務均應涵攝在內，須雇主於勞基法賦予保護勞工之各種手段，仍無法改善情況，已難期待雇主繼續僱用時，方得終止勞動契約；倘尚有其他途徑，即不應採取終止契約之方式為之，俾符合解僱最後手段性原則。</p>
+<p>㈡查上訴人於111年下半年（評核區間為111年11月1日至112年4月30日）考核總分2.33，為不合格，經被上訴人自112年6月1日起至同年8月28日止，由上訴人之主管每兩週與其進行檢討會議，於112年上半年（評核區間為112年5月1日至112年9月30日）考核總分2.28，仍不合格之事實，固為原審所認定（見原判決第3至5頁）。惟依被上訴人員工績效評核辦法第7章第2條規定：「…針對管理職能與行為指標任一項目或加權後總評等低於3分（不含）以下者，執行相關改善輔導計畫。㈠單位面談：由被考核人及其直屬主管討論後制定工作改善辦法與方向，於三個月後面談確認成效。且於三個月之改善期間內，應依序訂立具體的改善時間點，持續追蹤員工狀況。㈡教育訓練：視考核結果與待加強方向，由人力資源室協助安排相關教育訓練。」，可見於員工考核總評等低於3分（不含）時，除採用單位面談之方式外，另可由人力資源室安排相關教育訓練予以輔導改善。又依被上訴人員工管理規則5.8.5及員工績效評核辦法第7章第1條第2項規定，員工連續二次考核評等加權後總評等低於3（不含）以下者，將送交人評會評議。評議結果為不適任者，將予以降職、調動或解職（見第一審卷第60頁、第62頁）。明訂於員工連續二次考核總評等低於3分（不含）以下之情況，得採用降職、調動、解職等措施。觀諸111年下半年、112年上半年之考核表，雖記載上訴人不適任「專案組長」職務，然於「優點與特長」載有：「（被考核人）可執行有SOP的工作項目…」、「主管有明確說明做法或是有SOP指導方向的工作可確實執行」等語（見第一審卷第180、184頁），似見上訴人仍有照主管說明或依SOP指導方向執行之能力，尚非毫無可取之處。而上訴人於事實審表示可接受調派其他單位任職，並主張：被上訴人資訊處轄下有開發部、維運部、票務系統部等三大單位，各單位統轄約3至4個組別，資訊部共有60至70名員工等語（見第一審卷第253頁）。倘若非虛，以上訴人之上開能力及被上訴人之組織或規模，能否謂被上訴人無法再對上訴人安排教育訓練以輔導改善，甚至毫無將上訴人降職（如非主管職）或調任其他適當職務之可能？倘若有，能否僅因被上訴人曾安排上訴人與主管進行3個月檢討會議，即認符合解僱最後手段性原則？自茲疑義，有詳予研求之餘地。原審未遑詳查審認，遽為上訴人不利之判決，自嫌速斷。上訴論旨，指摘原判決違背法令，求予廢棄，非無理由。</p>
+<p>據上論結，本件上訴為有理由。依民事訴訟法第477條第1項、第478條第2項，判決如主文。</p></details><details id="j7"><summary>最高法院115年度台上字第567號判決（主文與理由全文）</summary><p>原判決廢棄，發回臺灣高等法院臺南分院。</p>
+<p>一、本件上訴人主張：臺灣高等法院臺南分院111年度重上更一字第14號判決（下稱原確定判決)係認兩造無任何宗親關係，顯不可能為同一祭祀公業之派下，而為伊不利之判決。伊於該判決確定後，為追本溯源，遠赴大陸地區探究兩造先祖身分，發現未經原確定判決斟酌之民國114年8月8日泉州姓氏文化交流協會關於蘇氏族譜記載與遷臺說明（下稱系爭說明)，並經中華人民共和國福建省泉州市海峽公證處出具公證書（下稱系爭公證書)，及財團法人海峽交流基金會出具證明（下稱系爭證明，合稱系爭再審證據）；系爭說明摘錄蘇氏族譜記載之第14世包括伊之先祖蘇榮華、蘇振信即被上訴人先祖蘇為之父蘇信，足證兩造間確屬遠房宗親，如經斟酌，伊可受較有利益之裁判等情，依民事訴訟法第496條第1項第13款規定，對原確定判決提起再審之訴。</p>
+<p>二、原審不經言詞辯論，逕以判決駁回上訴人再審之訴，係以：系爭說明、系爭公證書及系爭證明依序記載出具日期為114年2月21日、同年8月8日、同年9月9日，均係前訴訟程序事實審言詞辯論終結日即111年12月21日之後始作成，非屬民事訴訟法第496條第1項第13款所稱發現未經斟酌或得使用之證物。況原確定判決已審究前訴訟程序卷內相關戶籍資料、兩造提出之族譜、神祖牌位，認定兩造間無任何親戚關係，上訴人復未舉證證明系爭再審證據係依前訴訟程序時已提出之證物作成，難認屬未經斟酌之證物。上訴人依民事訴訟法第496條第1項第13款規定，提起本件再審之訴，顯無理由，應予駁回等詞，為其判斷之基礎。</p>
+<p>三、按再審之訴顯無理由者，依民事訴訟法第502條第2項之規定，雖得不經言詞辯論，以判決駁回之。惟若當事人主張之原因事實，僅據訴狀之記載，尚有不明瞭或有其他情形，必須調查證據後始能斷定再審理由之有無者，或法院已踐行調查證據認定事實之程序，即不得遽指再審之訴顯無理由，不經言詞辯論，逕以判決駁回之。原審經調閱前訴訟程序卷宗（見原審卷第107頁），認定原確定判決已審究前訴訟程序卷內之相關戶籍資料、兩造之族譜、神祖牌位，復認上訴人未舉證系爭再審證據係依前訴訴訟程序時已提出之證物所作成，即已踐行調查證據、認定事實之程序，依前揭說明，自無適用上開條項規定。乃原審不經言詞辯論，逕以判決駁回上訴人本件再審之訴，自有可議。上訴論旨，指摘原判決違背法令，求予廢棄，非無理由。</p>
+<p>四、據上論結，本件上訴為有理由。依民事訴訟法第477條第1項、第478條第2項，判決如主文。</p></details><details id="j8"><summary>最高法院115年度台上字第62號判決（主文與理由全文）</summary><p>上訴駁回。</p>
+<p>第三審訴訟費用由上訴人負擔。</p>
+<p>一、本件上訴人主張：被上訴人為取得勞動部勞動基金運用局（下稱運用局）、公務人員退休撫卹基金管理局（下稱管理局）公開徵求106年度勞工退休基金、勞工保險基金、國民年金保險基金及公務人員退休撫卹基金（下合稱系爭基金）之國外委託經營業務受託機構簽約資格，於民國105年間、106年11月1日分別與伊簽立客戶支援合約（下合稱系爭合約），約定由伊擔任被上訴人之服務團隊，為被上訴人提供有關委託投資契約之客戶支援服務及協助，被上訴人則應按季給付伊服務費用，合約自簽署日起生效，除非依第5(b)、(c)條終止，應持續有效。嗣被上訴人與運用局、管理局分別簽訂委託投資契約，擔任受託機構，自106年7月25日、107年6月5日起生效，委託期限均5年，期滿並續約5年。詎被上訴人於未發生約定終止事由之情形下，於111年6月21日以函文（下稱系爭函文）向伊表示將於同年7月24日終止系爭合約，自不生合法終止效力，兩造間系爭合約關係仍存在，伊得依系爭合約第2條約定，請求被上訴人給付自111年7月25日起至112年12月31日止（下稱系爭期間）之服務費用等情，求為命被上訴人給付美金（下同）55萬5,845.31元及10萬5,842.37元（下稱系爭服務費用）之判決（未繫屬本院部分，不予贅述）。</p>
+<p>二、被上訴人則以：兩造間系爭合約關係屬委任性質，業經伊以系爭函文終止而不存在，且上訴人於系爭期間未提供任何服務，不得請求報酬等語，資為抗辯。</p>
+<p>三、原審維持第一審所為上訴人敗訴之判決，駁回其上訴，係以：兩造簽訂系爭合約，約定被上訴人委託上訴人提供委託投資契約客戶支援服務及協助之勞務給付，兩造並非居於共同經營系爭基金國外投資運用項目受託機構之地位，上訴人受託處理之事務，並未涉及系爭基金委託國外投資運用項目之經營委託核心事項；兩造約定因履行系爭合約義務產生之成本與支出應各自負擔，委託投資契約之成本與相關支出由被上訴人負擔；上訴人服務費用係以被上訴人每年管理資產之0.02%計算或每年4萬元，以數額較高者為準，被上訴人應按季於收到委託投資契約管理費用10曆日內支付上訴人，並無共同取得報酬後結算並拆分利潤之情事，顯未具有合夥或類似合夥之合作、合資性質，應為委任契約性質。依系爭合約第5(a)條約定：「本合約應自簽署日起生效，除非依第5(b)或5(c)條終止，應持續有效；但若所有委任投資契約均終止，本合約應自動終止。」，第5(b)條約定：「若依TAMCO（按指被上訴人）合理判斷，服務提供者（按指上訴人）履約不符要求，TAMCO有權提前30日以書面通知服務提供者，終止本合約。若他方(ⅰ)無力清償、破產、解散、財產遭指派接管人或發生類似事件；或(ⅱ)重大違反本合約，且無法補正或未於違約發生後十(10)個營業日內補正，當事人有權以書面立即終止本合約，無需支付違約金。」，第5(c)條約定：「若服務提供者發生控制權變動，TAMCO有權立即終止本合約」。被上訴人於111年6月21日以系爭函文向上訴人表示依系爭合約第5(a)、(b)條約定，終止系爭合約；於法院審理時陳稱：上訴人有如原判決附表所示未善盡受託人注意義務情事，如認與系爭合約第5(a)、(b)條約定不符，然被上訴人對上訴人處理事務之注意及能力已未完全信任，兩造間信賴關係已發生動搖等語，則被上訴人抗辯上訴人收受系爭函文，於111年7月24日屆期應已發生其依民法第549條第1項規定終止系爭合約之效力等語，核屬有據。是上訴人依系爭合約第2條約定，請求被上訴人給付系爭服務費用，為無理由，不應准許等詞，為其心證之所由得。</p>
+<p>四、本院判斷：按委任契約，係以當事人之信賴關係為基礎所成立之契約，故不論有無報酬，因何理由，依民法第549條第1項規定，均得隨時予以終止。縱使當事人間有不得終止之特約，如其信賴關係已動搖，倘使委任人仍受限於該特約，強令其繼續委任，實與成立委任契約之基本宗旨有違，故仍有民法第549條第1項規定之適用。原審本於取捨證據、認定事實及解釋契約之職權行使，綜合相關事證，認定系爭合約為委任契約性質，則其謂被上訴人於111年6月21日以系爭函文向上訴人表示終止系爭合約，縱與系爭合約第5(a)、(b)條約定不符，仍生依民法第549條第1項規定終止系爭合約之效力，於法並無違誤。上訴論旨，指摘原判決為不當，聲明廢棄，即無理由。</p>
+<p>五、據上論結，本件上訴為無理由。依民事訴訟法第481條、第449條第1項、第78條，判決如主文。</p></details><details id="j9"><summary>最高法院115年度台上字第686號判決（主文與理由全文）</summary><p>原判決廢棄，發回臺灣高等法院。</p>
+<p>一、本件被上訴人主張：兩造自民國100年起開始合作以專案方式進行土地整合開發、規劃興建房屋銷售獲利事宜（下稱100年投資協議），嗣於103年11月13日就坐落○○縣○○市（現改制為○○市○○區）○○段000地號土地（合併自同段000、000-0、000、000-0地號土地，下稱系爭土地）及其餘17筆土地，簽訂投資協議書（下稱系爭投資協議），就系爭土地部分約定伊出資新臺幣（下同）1億3,615萬2,000元，由上訴人全權進行土地整合開發、興建房屋銷售等事宜（下稱系爭專案），並援用100年投資協議之約定，待系爭專案結案後依投資比例結算及分配利潤或虧損。上訴人乃以其擔任負責人之竹風建設股份有限公司（下稱竹風公司）名義與訴外人隆大營建事業股份有限公司（下稱隆大公司）、希華建設股份有限公司（下稱希華公司）、吉美建設事業股份有限公司(下稱吉美公司）等，共同在系爭土地興建戶數達237戶之竹風青庭建案（下稱系爭建案）。系爭建案迄今已至少銷售230戶，銷售率為97%以上，已達系爭投資協議約定之結案程度。倘認系爭建案尚未達約定結案程度，因系爭投資協議為重在出資、分潤之非典型合資契約，亦得類推適用民法第686條第1項規定，以起訴狀繕本送達上訴人為聲明退出合資關係之意思表示並請求結算等情。爰依系爭投資協議約定、類推適用民法第689條第1項規定，擇一求為命上訴人協同結算系爭專案至結算日之投資財產狀況之判決。</p>
+<p>二、上訴人則以：系爭投資協議屬隱名合夥與委任相互結合之聯立契約，投資標的係統整18筆土地，於該18筆投資標的尚未全部執行完畢，或經合意就部分先行結算前，被上訴人不得單獨請求系爭土地上之系爭建案為結算，況系爭建案尚有7戶房屋及19個車位尚未銷售完畢，未達結案程度。被上訴人曾於106年6月16日委由訴外人羅閎逸律師發函向伊表示全面終止所有投資合作之授權（下稱系爭106年律師函），已為終止系爭投資協議或聲明退出合資關係之意思表示，系爭投資協議之效力於該日終止，應以同年6月16日或8月16日之合資財產狀態作為結算基礎等語，資為抗辯。</p>
+<p>三、原審維持第一審所為上訴人敗訴之判決，駁回其上訴，係以：兩造於103年11月13日簽訂系爭投資協議，約定包含系爭土地在內之18筆投資標的及各筆標的之投資金額（系爭專案之投資金額為1億3,615萬2,000元），投資案委由上訴人全權處理，並約定援用100年投資協議之內容。上訴人乃以竹風公司名義，與隆大公司、希華公司、吉美公司在系爭土地上共同起造興建系爭建案等情，為兩造所不爭執。依系爭投資協議之約定，並參酌100年投資協議之內容，兩造之約定重在合資進行土地投資專案、分配利潤，屬共同出資或合資之無名契約，就契約未約定之事項，依其性質類推適用合夥之約定。兩造約定之「結案」，係指各該專案達可結算利潤或虧損之狀態而言，非同一協議書所規劃之數專案均須執行完畢。又各建案於完工後無法完售，核屬常見，就未出售部分亦可合理估算市場價值，非可因建案未完售即認無法進行結算。系爭建案為系爭投資協議其中一個獨立專案，興建完成後已售出逾97%，僅餘7戶房屋及19個車位持續滯銷數年，其銷售狀態已固定，而達得以計算、分配盈虧之結案程度。系爭106年律師函僅表示終止投資合作之授權，各投資案須與被上訴人另行協議始得進行開發，就已開發之投資案要求上訴人提出進度及分配概算之意旨，並無終止系爭投資協議或聲明退出合資關係之文字，證人羅閎逸律師證述系爭106年律師函是退夥之意思云云，與該函文義不符，不足採信。況系爭投資協議僅於兩造間發生合資關係，如得其中一人以意思表示表明退出合資關係，即生該人退出合資及必須結算之效力，則合資契約僅餘一人，將使其目的不達，自須經兩造合意始生退夥效力，再行結算。參以證人羅閎逸律師另證稱發函後曾陪被上訴人與上訴人洽談退夥結算事宜，惟差距過大未達成退夥結算之合意等語，及兩造於106年後就雙方間投資協議關係陸續進行部分結算或就結算爭議而為爭訟等情，足證系爭106年律師函後兩造間系爭投資協議仍存續，且已達可結算之程度，被上訴人以起訴狀繕本送達所為退出合資之意思表示，亦不影響合資關係繼續存在。從而，被上訴人依系爭投資協議之法律關係，請求上訴人協同結算系爭專案至結算日之投資財產狀況，為有理由，應予准許等詞，為其判斷之基礎。</p>
+<p>四、查兩造簽訂系爭投資協議，並約定援用100年投資協議之內容，系爭投資協議除記載投資標的物及金額外，僅約定：「投資案委由乙方（上訴人）全權處理」；100年投資協議則約定：「...三、甲方（被上訴人）全權委由乙方（上訴人）依據房地產市場專業判斷，進行土地整合、土地銷售、規劃興建房屋或與第三方合作等事宜。...五、乙方應就各項專案分別設置專帳處理，每一專案結案後，乙方應分別結算各該專案之盈虧，並計算雙方應分得之利潤或虧損，分配之」各情（見第一審卷一第41頁、第35頁、第37頁），被上訴人嗣以系爭106年律師函通知上訴人略以：...以本函為意思表示，全面終止與台端之所有投資合作之授權...吾等認徐榮聰涉有詐騙吾等投資之嫌，態度惡劣，彼此間之信賴關係已不復存在...請於文到後五日內返還由徐榮聰先生保管之專用於辦理投資土地貸款、給付買賣價金、繳息用途之印章及金融機構存摺等物品，並以本函為意思表示，全面終止與徐榮聰先生之所有投資合作之授權...吾等與徐榮聰之投資案，如已結案者應儘速將結算明細告知，並提出分配方案；已開發尚未結案者亦應提出目前進度為何與日後分配概算加以說明；尚未開發者，本函明確表示終止授權，故如欲開發或為任何處分，需另行與吾等協議後始得為之...等語（見第一審卷二第296頁至第304頁），為原審認定之事實。原審既認定被上訴人出資，由上訴人執行之系爭投資協議為合資契約，則系爭106年律師函明確表示終止投資合作之授權，不願繼續出資（停止授權由上訴人處理貸款事宜），並就兩造間各專案區分已結案、開發中、尚未開發之情況，就其後續處理方式分別為明確之要求，參以為被上訴人書具系爭106年律師函之證人羅閎逸律師於另案證稱系爭106年律師函是退夥的意思，其亦陪同兩造見面商談退夥結算事宜等語（見第二審卷一第386頁至第389頁）。果爾，能否謂系爭106年律師函並非被上訴人通知上訴人退出合資關係（終止系爭投資協議）之意思？非無再事斟酌之餘地。次按合資契約係雙方共同出資完成一定目的之契約，合夥則為二人以上互約出資以經營共同事業之契約，二者均係契約當事人共同出資，雙方就出資及獲利比例均按約定定之，差異僅在合夥以經營共同事業為特點，則就性質不相牴觸部分，合資契約非不得類推適用民法合夥之相關規定，以定合資人間之權益歸屬。又合夥未定有存續期間，或經訂明以合夥人中一人之終身，為其存續期間者，各合夥人得聲明退夥，但應於2個月前通知他合夥人，民法第686條第1項定有明文。合夥（合資）契約既以當事人間信賴基礎為前提，為避免合夥人（合資人）於信賴關係已失時，仍受合夥（合資）契約之拘束，除不得於不利於合夥（合資）事務時期為之外，原則上允許各合夥人（合資人）無須任何理由，均得自由提出退夥（退出合資）之聲明。又合夥人之聲明退夥（合資人退出合資），屬單獨行為，法無明定要式，僅須其意思表示到達其他合夥人（合資人），即生通知退夥（退出合資）之效力，且依民法第686條第1項規定，於意思表示到達2個月後生退夥（退出合資）效力。合資屬兩人以上互約出資，完成一定目的之契約，如因合資人退出合資致僅餘一人，因已不符合合資之成立要件，合資目的亦無從繼續，應類推適用民法第692條第3款所指「合夥目的事業已完成或不能完成」之合夥解散事由，並依同法第694條以下為合資之清算，而非以原合資人僅有二人為由，限制任一合資人退出合資之權利。乃原審未遑詳予審究，遽謂被上訴人並未或不得以系爭106年律師函、起訴狀繕本之送達為退出合資關係之意思表示，系爭投資協議在兩造之間繼續存在，上訴人應協同結算系爭專案至實際結算日之財產狀況，不免速斷。上訴論旨，指摘原判決違背法令，求予廢棄，非無理由。末查系爭106年律師函有無發生退出合資、解散合資關係，或終止系爭投資協議之效力，涉及被上訴人之請求權基礎及結算（清算）基準日，案經發回，併請注意及之。</p>
+<p>五、據上論結，本件上訴為有理由。依民事訴訟法第477條第1項、第478條第2項，判決如主文。</p></details><details id="j10"><summary>最高法院115年度台上字第84號判決（主文與理由全文）</summary><p>上訴駁回。</p>
+<p>第三審訴訟費用由上訴人負擔。</p>
+<p>一、本件被上訴人主張：伊為○○市○○區○○段000地號土地（下稱系爭土地）之共有人，系爭土地位於○○市○○○○鎮○○市○○○區（下稱系爭重劃區）內，系爭重劃區籌備會（下稱系爭籌備會）於民國98年1月17日召開第1次會員大會，決議通過之「○○市○○○○鎮○○市○○○區重劃會理事、監事選舉辦法」（下稱系爭選舉辦法）第8條第1項以「候選人得票數多寡」為選任理、監事之標準，違反95年6月22日施行之獎勵土地所有權人辦理市地重劃辦法（下稱95年獎勵重劃辦法）第13條第2項第2款、第3項關於選任理、監事應有全體會員2分之1以上，及其所有土地面積超過重劃區總面積2分之1同意（下稱系爭同意比例）之強制規定，應屬無效。該大會依系爭選舉辦法，以無記名連記法及侯選人得票數多寡選出理事李金安等13人及監事張國薰等3人（下稱系爭理、監事），未計算投票同意之會員所有位於系爭重劃區之土地面積；且訴外人王俐欣等67人係通謀虛偽登記為系爭重劃區內土地所有權人之人頭會員，其中66名出席第1次會員大會，扣除上開人頭會員之票數後，部分理、監事當選票數未達全體會員人數1/2以上，依95年獎勵重劃辦法第11條第4項規定，系爭重劃區重劃會（下稱系爭重劃會）自未成立。又第1次會員大會既未合法選出理、監事，系爭重劃會於107年12月19日召開第3次會員大會即屬無召集權人所召集。縱認系爭理、監事之選任合法，該第3次會員大會未經理事會決議召開，逕由理事長個人召集，亦有違95年獎勵重劃辦法第13條、第14條及系爭重劃會章程第8條規定，該次大會就提案4之系爭重劃區計算負擔總計表追認、提案5之系爭重劃區重劃分配結果草案所為之決議（下合稱系爭決議），自有不成立或無效之事由。另伊有建物（下稱系爭建物）坐落系爭土地上，重劃後伊未分得該建物所在之○○市○○區○○段000地號土地（下稱系爭街角地），且未減輕重劃負擔，亦有違市地重劃實施辦法第14條第3項第10款、第31條第5項規定等情，於原審變更其聲明之排列順序，並追加第一備位之訴，先位聲明求為確認系爭決議不成立；第一備位聲明求為確認系爭決議無效；第二備位聲明求為確認系爭決議關於分配予伊部分無效之判決（未繫屬本院者，不予贅述）。</p>
+<p>二、上訴人則以：第1次會員大會於98年1月17日召開後，伊已檢送章程、會員名冊、理事名冊、監事名冊、第1次會員大會會議紀錄、理事會會議紀錄等文件，經主管機關臺中市政府於98年2月27日核定，系爭重劃會已合法成立。95年獎勵重劃辦法第13條第2項第2款、第3項所定系爭同意比例，係指參與理、監事選舉會員之比例，非各理、監事當選之得票比例，系爭選舉辦法第6條、第8條規定以無記名、相對多數之當選門檻，未違反上開規定。第1次、第3次會員大會各項決議均符合系爭同意比例，第3次會員大會亦經合法召集，系爭重劃區變更工程預算書圖、計算負擔總計表業經臺中市政府依序於108年10月29日、同年12月2日重新核定而溯及生效，各項決議內容並未違法或違背公序良俗。又系爭建物業經確定判決應予拆除，上訴人未有任何合法建物坐落系爭街角地上，其原有土地所佔指數僅0.03，且未面臨○○路及任何街角線，無主張分配系爭街角地之權利。伊業依被上訴人先前主張，將其分配線兩側之重劃前土地，合併分配於面臨黎明路之原有土地及建物範圍內，未違反市地重劃實施辦法第31條第5項規定。自辦市地重劃涉及土地所有權人之財產權、居住自由，對於公共利益有重大影響，被上訴人主張系爭重劃會未合法成立，已侵害大部分會員權利，顯然欠缺權利保護必要，並違反法秩序安定及誠信、信賴保護原則等語，資為抗辯。</p>
+<p>三、原審以：系爭籌備會於94年7月1日成立，於98年1月17日召開第1次會員大會，並依章程及系爭選舉辦法第6條、第8條規定定，以無記名連記法及候選人得票多寡，選出系爭理、監事；系爭重劃會於98年1月22日檢送章程、會員名冊、理事名冊、監事名冊、第1次會員大會會議紀錄、理事會會議紀錄，經主管機關臺中市政府於98年2月27日核定；王俐欣等67人係通謀虛偽登記為系爭重劃區內土地所有權人之人頭會員，其中66名出席第1次會員大會，為兩造所不爭執。次查㈠95年獎勵重劃辦法第13條第2項第2款、第3項規定，會員大會選任理、監事應取得全體會員以系爭同意比例之同意，為各別理、監事取得會員同意而得合法代表會員之必要當選比例，屬強制規定，會員大會不得以章程或另訂選舉辦法或決議予以調降。未達系爭同意比例或無法判斷已達該比例之選任決議，除參與表決之人數或土地面積未達半數，致該決議未能成立外，依民法第71條規定，自屬無效。又自辦市地重劃關於會員大會選任理、監事之決議是否有效及重劃會是否合法成立，屬私權紛爭，當事人起訴請求確認重劃會不成立，民事法院自有審判之權，不因兩造之攻擊防禦方法涉及公法關係所生之爭議而受影響。自辦市地重劃關於理、監事選任之決議倘不符合系爭同意比例，重劃會之成立即不符實質正當性，縱主管機關事後已依95年獎勵重劃辦法第11條第4項規定作成核定，民事法院仍得對重劃會是否合法成立之私法行為審判，不受該核定之拘束。自辦市地重劃之會員大會須按系爭同意比例就市地重劃之重大事項進行決議，其得參與決議並計入同意或不同意之人數及面積者，應以重劃區內就重劃事務有切身利害關係之真正土地所有權人為限。重劃區土地所有權人倘以虛灌人頭方式參與會員大會選任理、監事之議決，藉以達到操控或阻擾重劃業務進行之目的，顯在規避95年獎勵重劃辦法第13條第3項關於系爭同意比例之強制規定，自屬脫法行為，受移轉登記之人參與議決之行為應屬無效，不得計入議決之人數及面積，俾確保重劃區內真正土地權利人之自治決定及憲法要求之正當程序。㈡系爭重劃會於98年1月17日第1次會員大會決議通過之系爭選舉辦法第6條、第8條以無記名連記法為選舉方式，並按候選人得票多寡決定當選結果之規定，已違反95年獎勵重劃辦法第13條第2項第2款、第3項關於系爭同意比例之強制規定，自屬無效。是日會員大會就選任系爭理、監事之決議，未併計算同意之會員所有位於重劃區內之土地面積，上訴人亦未證明投票同意選任系爭理、監事之會員所有土地面積合計超過重劃區總面積之1/2，足見選任系爭理、監事決議違反系爭同意比例之強制規定，自屬無效。依95年獎勵重劃辦法第11條第4項規定，系爭重劃會即未合法成立，不因主管機關臺中市政府於98年2月27日所為其成立之核定是否撤銷而受影響。又系爭重劃會未合法選任理、監事，自未能組成理事會，系爭重劃會理事長李柏卲以召集人名義，於107年12月19日召開之第3次會員大會，即屬無召集權人所為之召集，是日會員大會所為之系爭決議應不成立。被上訴人早於107年12月19日第3次會員大會通過系爭決議前，即於渠等另遭上訴人訴請拆屋還地事件（即原法院106年度上字第72號，下稱前事件）審理時，一再抗辯系爭重劃會未合法選任理、監事、未合法組成理事會，並非因不滿系爭決議配地結果，始爭執系爭理、監事選任決議有瑕疵，況上訴人理、監事會之組成及運作，有以大量虛灌人頭方式參與會員大會，藉以影響決議結果之重大不法投機行為，為確保系爭重劃區內真正土地權利人之自治決定及憲法要求之正當程序，應認被上訴人提起本件確認之訴為正當行使權利，並非權利濫用，自無欠缺權利保護之必要，亦無違反法秩序安定、誠實信用或信賴保護原則之情形。故被上訴人先位之訴請求確認系爭決議不成立，為有理由，應予准許。被上訴人先位之訴既有理由，毋庸就備位之訴為裁判。爰廢棄第一審所為被上訴人敗訴之判決，改判如其先位聲明。</p>
+<p>四、按95年獎勵重劃辦法第13條第3項，關於第2項第2款選任理事、監事決議所定之同意比例，係指各別理事及監事之選任獲得同意之比例，不得以會員大會決議之章程或另訂理監事選舉辦法而降低之。未達上開同意比例或無法判斷之選任決議，除該當不成立外，應屬無效，重劃會未合法成立，不因主管機關已為核定且未撤銷而受影響，為本院民事大法庭111年度台上大字第1958號裁定統一之法律見解。原審本此見解，認定系爭理、監事之選任決議無效，系爭重劃會未合法成立，不因主管機關已為核定而受影響，爰為被上訴人先位之訴勝訴之判決，經核於法並無違誤。上訴論旨，指摘原判決違背法令，求予廢棄，非有理由。末查，上訴人不符合95年獎勵重劃辦法第11條第4項所定之重劃會成立要件，固無權辦理市地重劃業務，惟仍不失為非法人團體，其設有代表人，自有當事人能力，得由該代表人代為訴訟行為。又當事人在第三審不得提出新攻擊防禦方法，上訴論旨謂：系爭重劃區內土地所有權人即第三人許國振已於112年10月20日召開會員大會針對第1次會員大會選出系爭理、監事之決議一一進行具名表決，已合於系爭同意比例及前事件就系爭重劃會合法成立之判斷，已生爭點效等語，並提出該次會員大會會議紀錄、臺中市政府函等件為證據，核係新防禦方法，本院依法不得斟酌，均附此敘明。</p>
+<p>據上論結，本件上訴為無理由。依民事訴訟法第481條、第449條第1項、第78條，判決如主文。</p></details><details id="j11"><summary>最高法院115年度台上字第874號判決（主文與理由全文）</summary><p>上訴駁回。</p>
+<p>第三審訴訟費用由上訴人負擔。</p>
+<p>一、本件被上訴人主張：伊自民國112年1月1日起，受上訴人委任處理媒體托播及廣告製作事宜，兩造簽訂媒體廣告購買及發稿代理合約書、廣告代理合約書（下分稱系爭媒體廣告合約、系爭代理合約，合稱系爭合約)，約定上訴人於每次廣告活動結束，依付款日直接匯款至伊指定帳戶。詎自同年7月起，上訴人即未依約付款，迄至同年9月止，已積欠伊製作費、廣告費共計新臺幣（下同)3,125萬9,671元，及依系爭合約第3條第3項約定計算之遲延利息3萬4,274元。又上訴人無故終止原判決附表（下稱附表)一原10項目、原20項目、附表二原11項目，依兩造簽訂之委刊單約定，應計罰違約金共870萬元。伊迭催上訴人給付，均未獲置理，乃以起訴狀繕本之送達，終止系爭合約等情，依系爭媒體廣告合約第3條第1項第1款、第8條第3項、系爭代理合約第3條第1項第1、2款、第8條第3項、系爭合約第3條第3項、民法第546條第1項、第548條第1項、委刊單約定，求為命上訴人給付3,132萬33元，及其中3,128萬5,759元加計法定遲延利息之判決（未繫屬本院部分，不予贅述)。</p>
+<p>二、上訴人則以：被上訴人未履行系爭合約約定之從給付義務，伊得為同時履行之抗辯而拒絕給付報酬。另伊前董事長詹景超代表伊於系爭合約中約定過高之廣告服務費、違約金，顯非合理。系爭合約已約定遲延利息以年息1.37%計算，且約定之違約金過高，應予酌減等語，資為抗辯。</p>
+<p>三、原審以：兩造於112年1月1日簽訂系爭合約，上訴人行銷總監訴外人陳彥豪、行銷部人員陸續簽署原證3至38之委刊單，為兩造所不爭執。次查被上訴人已執行並產生之廣告費用，關於系爭媒體廣告合約，附表一所示2,407萬5,407元扣除原15項目7萬3,823元後，為2,400萬1,584元（原判決誤載為2,387萬4,009元），關於系爭代理合約，依附表二為725萬8,087元，共計3,125萬9,671元，有與附表一及附表二所示項目相符之報價單、委刊單及請款發票可證。上訴人所指被上訴人應每週提供媒體週報、每月提供競品月報、每季提供媒體趨勢、新興媒體介紹、國內外成功案例簡報分享，僅係提供上訴人瞭解各產品之趨勢，與報酬之給付並無對價關係，上訴人為同時履行之抗辯而拒絕給付報酬，尚無足採。被上訴人請求上訴人給付廣告費用3,125萬9,671元，及依系爭合約第3條第3項約定按日加計年息1.37%，計算至112年10月30日，如附表一、二所示之遲延利息3萬4,274元，即為可取。上訴人未能證明委刊單約定違約罰則與詹景超擔任其董事長有關，其於112年8月14日任意終止附表一原10項目、原20項目及附表二原11項目之專案，被上訴人得依委刊單約定，請求上訴人賠償。審酌㈠兩造所簽附表一原10項目即原證12委刊單（下稱原證12委刊單）說明第2點約定任一方不得任意終止委刊之權利義務，違反者，須給付上刊期間全額廣告費用金額予他方，作為賠償。原證12委刊單金額於上訴人終止時，被上訴人已履行3期，最後1期即112年8月15日至同年9月14日金額為450萬元，被上訴人亦執行2個月，並提送結案報告以費用300萬元結案。被上訴人請求上訴人以剩餘廣告費150萬元作為賠償，乃被上訴人本可獲得之預期利益，屬消極損害；㈡附表二原11項目即原證13委刊單（下稱原證13委刊單）約定條款第2點約定上訴人不得任意取消廣告委刊，違者，應給付被上訴人委刊總金額之百分之20計算之懲罰性違約金。原證13委刊單於上訴人終止時，上訴人已給付前3期款項各600萬元，餘第4期600萬元未給付。再觀此為自媒體運營，約定合作期間達1年，被上訴人僅以未執行之第4期金額600萬元計算20%懲罰性違約金120萬元，為其依已定之計畫、設備，可得預期之利益；㈢附表一原20項目即原證22委刊單（下稱原證22委刊單）說明第1點亦約定任一方不得任意終止委刊之權利義務，違反者，須給付上刊期間全額廣告費用金額予他方。原證22委刊單於上訴人終止時，剩餘尚未執行之廣告費共4個月，合計為600萬元。被上訴人請求上訴人以剩餘廣告費600萬元作為賠償，亦屬被上訴人本可獲得之預期利益。㈣被上訴人與上開委刊單之下包廠商均有相同之違約罰則，上訴人復未舉證證明違約金有過高情事。被上訴人請求上訴人給付終止上開委刊單之違約金共計870萬元，即為可取。被上訴人可請求上訴人給付之金額總計3,999萬3,945元，上訴人以其受讓自訴外人宏將廣告股份有限公司對被上訴人之債權867萬3,912元抵銷後，為3,132萬33元。系爭合約第3條第3項約定遲延給付後所生之利息「按日加計年息1.37%」計算，明顯高於被上訴人請求依法定遲延利率計算之金額，更不利於上訴人。綜上，被上訴人依系爭媒體廣告合約第3條第1項第1款、第8條第3項、系爭代理合約第3條第1項第1、2款、第8條第3項、系爭合約第3條第3項、民法第546條第1項、第548條第1項、委刊單約定，請求上訴人給付3,132萬33元，及其中3,128萬5,759元自112年11月9日起計算之法定遲延利息，為有理由，應予准許。爰維持第一審就上開部分所為被上訴人勝訴之判決，駁回上訴人其餘上訴。</p>
+<p>四、按遲延之債務，以支付金錢為標的者，債權人得請求依法定利率計算之遲延利息。但約定利率較高者，仍從其約定利率，民法第233條第1項定有明文。兩造簽訂之系爭合約第3條第3項約定，上訴人如有延遲給付之情事，應自延遲之日起按日加計年息1.37%之利息予被上訴人。系爭合約業經終止，被上訴人得請求上訴人給付之總額扣除上訴人合法抵銷之債權867萬3,912元後，為3,132萬33元，為原審合法確定之事實。兩造約定之利率既非高於法定利率，則被上訴人請求上訴人給付3,132萬33元，及其中3,128萬5,759元自起訴狀繕本送達翌日起至清償日止，按法定利率即年息5%計算之利息，原審為上訴人敗訴之判決，理由雖有不同，結論並無不合，仍應維持。上訴論旨，指摘原判決違背法令，聲明廢棄，非有理由。</p>
+<p>五、據上論結，本件上訴為無理由。依民事訴訟法第481條、第449條第2項、第78條，判決如主文。</p></details>
+</main>
+<script>
+(function(){
+var KEY="citecheck-review-v1";
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){return {}}}
+function save(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+var st=load();
+document.querySelectorAll("input[type=radio]").forEach(function(r){
+  if(st[r.name]===r.value) r.checked=true;
+  r.addEventListener("change",function(){st[r.name]=r.value;save(st);count()});
+});
+document.querySelectorAll("input.note").forEach(function(n){
+  if(st[n.name]) n.value=st[n.name];
+  n.addEventListener("input",function(){st[n.name]=n.value;save(st)});
+});
+var rv=document.getElementById("reviewer"); rv.value=st["reviewer"]||"";
+rv.addEventListener("input",function(){st["reviewer"]=rv.value;save(st)});
+function count(){var n=document.querySelectorAll("input[type=radio]:checked").length;
+  document.getElementById("count").textContent="已完成 "+n+" / 25"}
+count();
+document.querySelectorAll("a[data-j]").forEach(function(a){
+  a.addEventListener("click",function(){var d=document.getElementById(a.dataset.j);if(d)d.open=true});
+});
+document.getElementById("export").addEventListener("click",function(){
+  var ans={},notes={};
+  document.querySelectorAll("input[type=radio]:checked").forEach(function(r){ans[r.name]=r.value});
+  document.querySelectorAll("input.note").forEach(function(n){if(n.value)notes[n.name.replace("note-","")]=n.value});
+  var out={reviewer:rv.value||"reviewer",answers:ans,notes:notes};
+  var b=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="review_answers.json";a.click();
+});
+})();
+</script></body></html>
