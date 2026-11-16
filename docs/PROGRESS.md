@@ -311,3 +311,33 @@
 ### 6. 沒做或沒驗證的事
 - 勾選 L2 的網頁流程只用 `MockClient`／環境變數缺失的情況測過，沒有對真實 API 試過。
 - 沒有在各種瀏覽器檢查表單頁按鈕停用行為（只確認 HTML 內有那段 JavaScript）。
+
+## SPEC_V2 Phase G
+
+### 1. 完成了什麼（對應 SPEC_V2 §10）
+- G1 `index.py`：`build_fts`（每次 `build-index` 結尾整個重建 `passages_fts`，trigram；只放 `role='SUPREME_COURT'`、判決或裁定、`procedural_dismissal=0` 的 passage）、`fts_query`（連續中文字／英數字片段取 3 字窗口、去重保序、前 60 個、加雙引號以 OR 相接）、`fts_search`（BM25 前 200 筆）、`has_fts`。`build-index` 會印出全文索引的段落數。
+- G2 `suggest.py`：`apply_suggestions` 在 `build_report` 內接在 `apply_l2` 之後（只有帶 `client` 時）。觸發、同裁判只取最高排名一段、略過原引用 jid、5 段一次比對（`judge.SYSTEM_PROMPT`／`build_user_prompt`／`query_llm` 原封不動）、`SUGGEST_THRESHOLD=0.8`、`ensure_prepared` 等價流程（失敗或該段有任何轉述句 → 捨棄）、依 confidence 取前 3、`passage` 最長 400 字、相同主張句共用結果；所有 API 呼叫走 `run_limited`，計入 120 次上限。報告模板與 `ZH` 的相近裁判區塊在 Phase D 已備妥，這次只是讓 `similar` 有內容。
+- G3 `citecheck eval-suggest <testset>` 與 `evaluate.eval_suggest`（不呼叫 API）。
+
+### 2. 我做的解讀
+1. 主張句長度的「15 個字」以 `clean_query` 之後去掉所有空白的字元數計。
+2. 相同主張句共用結果時，「略過書狀原本引用的 jid」取這些引用的 jid 聯集。
+3. 資料庫還沒有 `passages_fts`（沒重跑 `build-index`）時，`apply_suggestions` 靜默不動，不報 `IndexNotReady`，以免舊流程突然失敗；`eval-suggest` 則會報錯。
+4. 「該 passage 有任何一句被標為轉述」以 `quoted_sentences` 中有該 `passage_seq` 的任何一列判定。
+5. 比對提示只送 FTS 的原始 passage（未做 `apply_quotes` 重切），因為規格要求之後整段捨棄含轉述句的 passage。
+6. `eval-suggest` 的名次以去重後的 jid 順序計；主張句不足 15 字或抽不到對應引用的題目算「查不到」。
+
+### 3. 被調整預期值的既有測試
+無。
+
+### 4. pytest
+310 項通過（Phase D 結束時 284 項）。新增 `tests/test_phase_g.py`（26 項）：`fts_query`、`build_fts` 的收錄條件、門檻 0.8、只算 SUPPORTS、同裁判去重、略過原引用、轉述句捨棄、整理失敗捨棄、最多 3 筆、主張句太短、各觸發狀態與標籤、共用結果、無 client／無索引、顯示格式與 400 字、API 上限。
+
+### 5. 評測數字（AI 標註，未經人工複核；不呼叫 API；資料庫 3030 份裁判、4680 個 FTS 段落）
+- v1：金標 L2 為 COURT_HOLDING 的判決引用 10 題；金標裁判在前 5 名 10/10、前 20 名 10/10。
+- v2：15 題；前 5 名 15/15、前 20 名 15/15。
+- 只回報，沒有據以改規則。資料庫目前只有部分月份，Phase E 匯入整年資料後候選會多很多，這個數字屆時要重跑。
+
+### 6. 沒做或沒驗證的事
+- G2 對真實模型沒有試過（沒有跑含 L2 的完整流程）；SUGGEST_THRESHOLD 0.8 是否合適未知。
+- 相近裁判區塊在瀏覽器上的實際外觀沒有重看（模板 Phase D 已有）。

@@ -31,6 +31,25 @@ def build_index_cmd(rebuild: bool = typer.Option(False, "--rebuild", help="清�
     r = build_index(con, rebuild)
     typer.echo(f"切段規則版本 {SEGMENT_RULES_VERSION}：本次新建索引 {r['indexed_now']} 份，"
                f"先前已有 {r['already_indexed']} 份{'（已清空重做）' if r['rebuilt'] else ''}")
+    typer.echo(f"全文索引（passages_fts）已重建：{r['fts_passages']} 個段落")
+
+
+@app.command("eval-suggest")
+def eval_suggest_cmd(testset: Path, db: Path = typer.Option(DEFAULT_DB, "--db", help="資料庫路徑")):
+    """金標為 COURT_HOLDING 的題目：只用主張句查全文索引，金標裁判落在前 5／20 名的題數（不呼叫 API）。"""
+    from .evaluate import eval_suggest, load_testset
+    from .extract import build_lexicon
+    from .index import IndexNotReady
+
+    con = connect(db)
+    lex = build_lexicon(con, Path("data/law_aliases.json"), Path("data/case_words_tps_civil.json"))
+    try:
+        r = eval_suggest(load_testset(testset), con, lex)
+    except IndexNotReady as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(2)
+    typer.echo(f"金標 L2 為 COURT_HOLDING 的判決引用 {r['total']} 題（其中 {r['not_found']} 題的金標裁判不在全文索引或主張句不足）")
+    typer.echo(f"金標裁判落在前 5／20 名：{r['top5']}／{r['top20']} 題（AI 標註，未經人工複核）")
 
 
 @app.command()

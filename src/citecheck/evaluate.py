@@ -187,6 +187,38 @@ def passage_hits_gold(text: str, chunks: list[str]) -> bool:
     return bool(chunks) and sum(c in sq for c in chunks) >= max(1, math.ceil(len(chunks) / 3))
 
 
+def eval_suggest(rows: list[dict], con: sqlite3.Connection, lex: Lexicon) -> dict:
+    """SPEC_V2 G3: rank of the gold judgment in the full-text search by claim sentence alone (no API).
+
+    The gold jid is NOT skipped. Rank counts distinct judgments, best passage per judgment.
+    """
+    from .index import IndexNotReady, fts_search, has_fts, indexed_version
+    from .retrieve import clean_query
+    from .segment import SEGMENT_RULES_VERSION
+    from .suggest import MIN_CLAIM_CHARS
+
+    if indexed_version(con) != SEGMENT_RULES_VERSION or not has_fts(con):
+        raise IndexNotReady("沒有全文索引")
+    ranks: list[int | None] = []
+    for row in rows:
+        report = build_report(row["brief_text"], row["id"], con, lex, None)
+        raws = [j.raw for j in report.judgments]
+        for g in row["citations"]:
+            if g["type"] != "JUDGMENT" or g.get("gold_l2") != "COURT_HOLDING" or not g.get("gold_jid"):
+                continue
+            span = _locate(g["raw"], report.normalized_text, row["brief_text"])
+            hit = _match(span, "JUDGMENT", report.judgments) if span else None
+            q = clean_query(hit.claim_sentence or "", raws) if hit else ""
+            if len(re.sub(r"\s", "", q)) < MIN_CLAIM_CHARS:
+                ranks.append(None)
+                continue
+            order = list(dict.fromkeys(jid for jid, _, _ in fts_search(con, q)))
+            ranks.append(order.index(g["gold_jid"]) + 1 if g["gold_jid"] in order else None)
+    return {"total": len(ranks), "not_found": sum(r is None for r in ranks),
+            "top5": sum(1 for r in ranks if r is not None and r <= 5),
+            "top20": sum(1 for r in ranks if r is not None and r <= 20)}
+
+
 def eval_retrieval(rows: list[dict], con: sqlite3.Connection, lex: Lexicon) -> dict:
     """Where does the gold passage land in the BM25 ranking? (no API; needs build-index)"""
     from .index import load_passages

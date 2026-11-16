@@ -120,7 +120,8 @@ class OpenAIClient:
         missing = [n for n, v in (("CITECHECK_MODEL", model), ("OPENAI_API_KEY", key)) if not v]
         if missing:
             raise LLMConfigError("未設定環境變數：" + "、".join(missing))
-        return cls(model, key)
+        # CITECHECK_OPENAI_BASE_URL: full chat-completions URL of an OpenAI-compatible server (e.g. a local Ollama)
+        return cls(model, key, os.environ.get("CITECHECK_OPENAI_BASE_URL") or None)
 
     def _post(self, system: str, user: str, max_tokens: int = 600) -> str:
         import json
@@ -134,7 +135,7 @@ class OpenAIClient:
         req = urllib.request.Request(
             self._url, data=json.dumps(body).encode("utf-8"),
             headers={"Content-Type": "application/json", "Authorization": f"Bearer {self._key}"})
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=int(os.environ.get("CITECHECK_TIMEOUT", "60"))) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         choice = data["choices"][0]
         content = choice["message"].get("content") or ""

@@ -68,6 +68,8 @@ def build_report(raw_text: str, input_file: str, con: sqlite3.Connection, lex: L
     else:
         from .judge import apply_l2
         apply_l2(judgments, con, client, stats)
+        from .suggest import apply_suggestions
+        apply_suggestions(judgments, con, client, stats)
     apply_statute_l2(statutes, client, stats)
     stats.api_calls = api_calls_of(client) if client is not None else 0
     stats.cache_hits = getattr(client, "cache_hits", 0) if client is not None else 0
