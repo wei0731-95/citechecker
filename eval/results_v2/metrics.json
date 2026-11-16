@@ -1,0 +1,164 @@
+{
+  "n_items": 94,
+  "n_gold_citations": 91,
+  "n_matched": 91,
+  "extraction_recall": {
+    "num": 91,
+    "den": 91,
+    "rate": 1.0
+  },
+  "l1_accuracy": {
+    "num": 84,
+    "den": 84,
+    "rate": 1.0
+  },
+  "skipped_not_covered": 7,
+  "not_in_force_match": {
+    "num": 1,
+    "den": 1,
+    "rate": 1.0
+  },
+  "other_authorities_match": {
+    "num": 3,
+    "den": 3,
+    "rate": 1.0
+  },
+  "unrecognized_match": {
+    "num": 1,
+    "den": 1,
+    "rate": 1.0
+  },
+  "l2": {
+    "problem_detection_recall": {
+      "num": 19,
+      "den": 21,
+      "rate": 0.9047619047619048
+    },
+    "false_alarm_rate": {
+      "num": 0,
+      "den": 15,
+      "rate": 0.0
+    },
+    "uncertain_rate": {
+      "num": 0,
+      "den": 36,
+      "rate": 0.0
+    },
+    "green_precision": {
+      "num": 15,
+      "den": 17,
+      "rate": 0.8823529411764706
+    },
+    "valid_judgment_rate": {
+      "num": 36,
+      "den": 36,
+      "rate": 1.0
+    },
+    "label_accuracy": {
+      "num": 31,
+      "den": 36,
+      "rate": 0.8611111111111112
+    },
+    "confusion_matrix": {
+      "COURT_HOLDING": {
+        "COURT_HOLDING": 15,
+        "PARTY_ARGUMENT": 0,
+        "LOWER_COURT_VIEW": 0,
+        "CONTRADICTED": 0,
+        "NOT_IN_JUDGMENT": 0,
+        "UNCERTAIN": 0,
+        "NOT_RUN": 0,
+        "MISSING": 0
+      },
+      "PARTY_ARGUMENT": {
+        "COURT_HOLDING": 1,
+        "PARTY_ARGUMENT": 2,
+        "LOWER_COURT_VIEW": 2,
+        "CONTRADICTED": 0,
+        "NOT_IN_JUDGMENT": 0,
+        "UNCERTAIN": 0,
+        "NOT_RUN": 0,
+        "MISSING": 0
+      },
+      "LOWER_COURT_VIEW": {
+        "COURT_HOLDING": 1,
+        "PARTY_ARGUMENT": 1,
+        "LOWER_COURT_VIEW": 4,
+        "CONTRADICTED": 0,
+        "NOT_IN_JUDGMENT": 0,
+        "UNCERTAIN": 0,
+        "NOT_RUN": 0,
+        "MISSING": 0
+      },
+      "CONTRADICTED": {
+        "COURT_HOLDING": 0,
+        "PARTY_ARGUMENT": 0,
+        "LOWER_COURT_VIEW": 0,
+        "CONTRADICTED": 6,
+        "NOT_IN_JUDGMENT": 0,
+        "UNCERTAIN": 0,
+        "NOT_RUN": 0,
+        "MISSING": 0
+      },
+      "NOT_IN_JUDGMENT": {
+        "COURT_HOLDING": 0,
+        "PARTY_ARGUMENT": 0,
+        "LOWER_COURT_VIEW": 0,
+        "CONTRADICTED": 0,
+        "NOT_IN_JUDGMENT": 4,
+        "UNCERTAIN": 0,
+        "NOT_RUN": 0,
+        "MISSING": 0
+      },
+      "NOT_RUN": {
+        "COURT_HOLDING": 0,
+        "PARTY_ARGUMENT": 0,
+        "LOWER_COURT_VIEW": 0,
+        "CONTRADICTED": 0,
+        "NOT_IN_JUDGMENT": 0,
+        "UNCERTAIN": 0,
+        "NOT_RUN": 12,
+        "MISSING": 0
+      }
+    }
+  },
+  "statute_l2": {
+    "mismatch_detection_rate": {
+      "num": 8,
+      "den": 8,
+      "rate": 1.0
+    },
+    "false_alarm_rate": {
+      "num": 0,
+      "den": 13,
+      "rate": 0.0
+    },
+    "confusion_matrix": {
+      "MATCHES": {
+        "MATCHES": 8,
+        "MISMATCH": 0,
+        "NOT_STATED": 0,
+        "UNCERTAIN": 0,
+        "NOT_RUN": 0,
+        "MISSING": 0
+      },
+      "MISMATCH": {
+        "MATCHES": 0,
+        "MISMATCH": 8,
+        "NOT_STATED": 0,
+        "UNCERTAIN": 0,
+        "NOT_RUN": 0,
+        "MISSING": 0
+      },
+      "NOT_STATED": {
+        "MATCHES": 1,
+        "MISMATCH": 0,
+        "NOT_STATED": 4,
+        "UNCERTAIN": 0,
+        "NOT_RUN": 0,
+        "MISSING": 0
+      }
+    }
+  },
+  "note": ""
+}
