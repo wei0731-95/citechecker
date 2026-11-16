@@ -365,3 +365,16 @@
 
 ## 其他
 - `citecheck stats` 在法規資料超過 90 天沒更新時顯示提醒（SPEC_V2 §11.5，Phase D 當時未做）。
+
+## SPEC_V2 C5 放行檢查（真實 API，gpt-6-luna，使用者執行）
+
+指令：`citecheck eval eval/testset_v2.jsonl --out eval/results_api`（`CITECHECK_PROVIDER=openai`；API 拒絕 `temperature`，依既有機制省略後重試）。結果在 `eval/results_api/`。
+
+結果（AI 標註，未經人工複核）：
+- 綠色精確率 14/15＝93.3% → 條件 1（≥ 0.90）**符合**。
+- 金標為 PARTY_ARGUMENT 或 LOWER_COURT_VIEW、系統輸出 COURT_HOLDING：只有 C04，共 1 題 → 條件 2（≤ 1）**符合**。
+- 其他：L2 問題偵測召回 20/21、誤報 1/15、不確定 0/36、逐題標籤正確 30/36、法條不符偵測 8/8、法條誤報 0/13、抽取 91/91、L1 84/84。
+- 唯一答錯的綠色是 C04（原因見上一節：原審理由的轉述被切成本院，且轉述句整理漏標）。其餘 5 題判決錯誤皆不是綠色：B01、B05、C05、I02 為角色標籤不同，D01 金標 CONTRADICTED 系統輸出 NOT_IN_JUDGMENT；法條 S301 金標 NOT_STATED 系統輸出 MATCHES（金標是否過嚴未改）。
+- 沒有調整任何門檻、提示詞或規則。C5 通過，Phase C 的放行檢查完成。
+
+未做：`prep-samples` 仍未用真實 API 跑；Phase G 的 0.8 門檻未驗證。
