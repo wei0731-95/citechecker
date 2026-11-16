@@ -1,12 +1,18 @@
 """Report building, JSON and HTML output."""
+import os
 import sqlite3
+import time
 from datetime import datetime
 from pathlib import Path
 
+from .db import SCHEMA_VERSION
 from .extract import Lexicon, extract_full
-from .models import DataCoverage, JudgmentCitation, L2Label, Report, Span
+from .models import DataCoverage, JudgmentCitation, L2Label, Report, RunStats, Span
 from .normalize import normalize_with_map
-from .statute_check import apply_statute_l2
+from .judge import api_calls_of
+from .prep import PREP_PROMPT_VERSION
+from .segment import SEGMENT_RULES_VERSION
+from .statute_check import STATUTE_PROMPT_VERSION, apply_statute_l2
 from .verify import ARTICLE_URL, covered_years, imported_months, verify_judgment, verify_statute  # noqa: F401
 
 
@@ -42,6 +48,7 @@ def data_coverage(con: sqlite3.Connection) -> DataCoverage:
 def build_report(raw_text: str, input_file: str, con: sqlite3.Connection, lex: Lexicon,
                  client=None) -> Report:
     """client=None -> L1 only (every l2_label is NOT_RUN)."""
+    t0 = time.monotonic()
     text, ranges = normalize_with_map(raw_text)
     ex = extract_full(text, lex)
     statutes, judgments, warnings = ex.statutes, ex.judgments, ex.warnings
@@ -53,17 +60,24 @@ def build_report(raw_text: str, input_file: str, con: sqlite3.Connection, lex: L
         c.original_span = orig(c.span)
     statutes = [verify_statute(s, con) for s in statutes]
     judgments = [verify_judgment(j, con, lex) for j in judgments]
+    stats = RunStats()
     if client is None:
         for j in judgments:
             j.l2_label = L2Label.NOT_RUN
     else:
         from .judge import apply_l2
-        apply_l2(judgments, con, client)
-    apply_statute_l2(statutes, client)
+        apply_l2(judgments, con, client, stats)
+    apply_statute_l2(statutes, client, stats)
+    stats.api_calls = api_calls_of(client) if client is not None else 0
+    stats.cache_hits = getattr(client, "cache_hits", 0) if client is not None else 0
+    stats.seconds = round(time.monotonic() - t0, 2)
     return Report(input_file=input_file, generated_at=datetime.now().astimezone().isoformat(),
                   data_coverage=data_coverage(con), normalized_text=text,
                   statutes=statutes, judgments=judgments, warnings=warnings, original_text=raw_text,
-                  other_authorities=ex.other_authorities, unrecognized=ex.unrecognized)
+                  other_authorities=ex.other_authorities, unrecognized=ex.unrecognized,
+                  llm_model=(os.environ.get("CITECHECK_MODEL") or getattr(getattr(client, "inner", client), "model", None)) if client is not None else None,
+                  versions={"segment_rules": SEGMENT_RULES_VERSION, "prep_prompt": PREP_PROMPT_VERSION,
+                            "statute_prompt": STATUTE_PROMPT_VERSION, "schema": SCHEMA_VERSION}, stats=stats)
 
 
 def write_json(report: Report, out_dir: Path) -> Path:

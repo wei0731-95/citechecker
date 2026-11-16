@@ -1,6 +1,8 @@
 """Evaluation against a hand-labelled test set (SPEC 9, docs/TESTSET_GUIDE.md)."""
 import csv
 import json
+import math
+import re
 import sqlite3
 from pathlib import Path
 
@@ -171,3 +173,44 @@ def write_results(metrics: dict, errors: list[dict], out_dir: Path) -> None:
         w = csv.DictWriter(f, fieldnames=cols)
         w.writeheader()
         w.writerows(errors)
+
+
+def gold_chunks(passage: str) -> list[str]:
+    """Gold passage without whitespace (and without the '…' joiner), cut every 15 characters."""
+    sq = re.sub(r"[\s\u3000…]", "", passage)
+    return [sq[i:i + 15] for i in range(0, len(sq), 15)]
+
+
+def passage_hits_gold(text: str, chunks: list[str]) -> bool:
+    """A passage counts if it holds at least a third of the chunks (at least one)."""
+    sq = re.sub(r"[\s\u3000]", "", text)
+    return bool(chunks) and sum(c in sq for c in chunks) >= max(1, math.ceil(len(chunks) / 3))
+
+
+def eval_retrieval(rows: list[dict], con: sqlite3.Connection, lex: Lexicon) -> dict:
+    """Where does the gold passage land in the BM25 ranking? (no API; needs build-index)"""
+    from .index import load_passages
+    from .retrieve import clean_query, rank
+
+    ranks: list[int | None] = []
+    for row in rows:
+        report = build_report(row["brief_text"], row["id"], con, lex, None)
+        raws = [j.raw for j in report.judgments]
+        for g in row["citations"]:
+            if (g["type"] != "JUDGMENT" or not g.get("gold_passage") or not g.get("gold_jid")
+                    or g.get("gold_l2") in ("NOT_IN_JUDGMENT", "NOT_RUN")):
+                continue
+            span = _locate(g["raw"], report.normalized_text, row["brief_text"])
+            hit = _match(span, "JUDGMENT", report.judgments) if span else None
+            if hit is None:
+                ranks.append(None)
+                continue
+            ranked = rank(clean_query(hit.claim_sentence or "", raws), load_passages(con, g["gold_jid"]))
+            chunks = gold_chunks(g["gold_passage"])
+            pos = next((i + 1 for i, p in enumerate(ranked) if passage_hits_gold(p.text, chunks)), None)
+            ranks.append(pos)
+    out = {"total": len(ranks)}
+    for k in (1, 3, 5, 10):
+        out[f"top{k}"] = sum(1 for r in ranks if r is not None and r <= k)
+    out["not_found"] = sum(1 for r in ranks if r is None)
+    return out

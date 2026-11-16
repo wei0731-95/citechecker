@@ -215,3 +215,37 @@
   - B01、B05 → LOWER_COURT_VIEW：與書狀相符的內容在原審理由裡複述當事人抗辯，角色標為 LOWER_COURT；金標為 PARTY_ARGUMENT（第二標註也同意），屬原審複述當事人主張的邊界情形。
   - S301（民法第179條，金標 NOT_STATED）→ MATCHES：題句「被告無法律上原因受有利益，原告爰依民法第179條規定請求返還」其實描述了條文內容，金標可能標得太嚴；依 §1.5 不因系統輸出改金標。
 - 觀察：C04、C05 是切段規則在「原審理由的小段落」誤觸發「查」與「當事人陳述句」；SPEC_V2 沒有安排修切段規則。
+
+## SPEC_V2 Phase F
+
+### 1. 完成了什麼（對應 SPEC_V2 §7）
+- F1：`segment.SEGMENT_RULES_VERSION = 1`；`index.py` 與 `citecheck build-index [--rebuild]`（寫入 `segments`、`passages`、`judgments.procedural_dismissal`，每 500 筆 commit，可中斷重跑，版本不同會清空重做，並寫入 `meta.segment_rules_version`）；`judge.apply_l2` 改讀 `passages` 表，沒有索引或版本不符就在任何 API 呼叫之前報錯「請先執行 citecheck build-index」（`check`、`eval`、`prep-samples` 皆處理成 exit code 2）；`verify_judgment` 的 `main_text` 改從 `segments` 取；`ingest-judgments` 結束提示執行 build-index。
+- F2：`prep.py`（`split_sentences`、`PREP_SYSTEM_PROMPT`／`PREP_PROMPT_VERSION = 1`、批次 ≤20,000 字且不拆 passage、輸出上限 2,000 token、回應驗證、重試 1 次並記錄失敗回應、`ensure_prepared`、`load_quotes`）；`llm.py` 的各 client 都接受選用參數 `max_tokens=600`（快取鍵不含它）；`prep-samples` 指令。
+- F3：`build_report` 依序執行抽取與 L1 → 判決整理 → 判決比對（同一份書狀內 (主張句, jid) 相同只呼叫一次）→ 法條比對；`judge.run_limited`（最多 4 個並行、LLM 呼叫之外的事都在主執行緒）；`MAX_API_CALLS_PER_CHECK = 120`；`CachingClient` 有執行緒安全的 `api_calls`／`cache_hits`；`RunStats`、`Report.versions`、`Report.llm_model` 已填；`check` 結束印出「API 呼叫 N 次、快取命中 N 次、新整理裁判 N 份、因上限略過 N 筆、耗時 N 秒」；`eval-retrieval` 指令。
+
+### 2. 我做的解讀
+1. 重建索引時，除了清空 `segments`、`passages`，也一併清空 `quoted_sentences` 與 `judgment_prep`（它們的 `passage_seq` 指向舊的 passages，留著會對不上）。
+2. 呼叫上限的計算：送出工作前檢查「實際 API 呼叫數 ＋ 正在進行中的工作數」是否已達上限（只看已完成的呼叫數，在並行時會一口氣送出超過上限的工作）；重試造成的額外呼叫不另外預留，所以上限是軟性的。
+3. 第 2 步（判決整理）也受呼叫上限約束：被略過的裁判，引用它的判決引用不做比對（`NOT_RUN`，計入 `skipped_by_cap`）。目前 Phase F 還沒有用整理結果去修正比對（那是 Phase C），整理失敗也不影響判決標籤。
+4. `procedural_dismissal` 在 build-index 時依 §8 C3 的規則算出並存入；「使用」（`COURT_HOLDING` → `UNCERTAIN`）屬 Phase C。
+5. `quoted_sentences` 的 `sent_idx` 是該句在 `split_sentences(passage.text)` 的位置（從 0 起算）。
+
+### 3. 被調整預期值的既有測試
+| 測試 | 原預期 | 新預期 | 對應 |
+|---|---|---|---|
+| `tests/test_report.py` 的 fixture | 直接用資料庫跑含 L2 的 `build_report` | fixture 先 `build_index`（判決內容比對改讀 passages 表，沒有索引會報錯） | F1 第 3 點 |
+
+### 4. pytest
+213 項通過（Phase B 結束時 174 項）。
+
+### 5. 評測數字（AI 標註，未經人工複核；沒有 API 金鑰，全部 `--no-l2`）
+- `eval/testset.jsonl`（v1）：Phase F 之前 → 之後：抽取 42/42 → 42/42；L1 39/42 → 39/42（沒有變化）。
+- `eval/testset_v2.jsonl`：抽取 91/91 → 91/91；L1 84/84 → 84/84（沒有變化）。
+- `eval-retrieval`（BM25，`TOP_K = 5` 不變，只回報）：v1 有金標段落的 23 題，金標段落落在前 1／3／5／10 名為 17／22／23／23 題（與規格引用的數字相同）；v2 有金標段落的 32 題為 30／31／31／32 題。
+- 真實資料庫索引：3,030 份判決，22,120 個 segments、21,813 個 passages，耗時約 7 秒；`procedural_dismissal` 標為 1 的有 1,632 份裁定、0 份判決。
+- 含 L2 的評測：未執行（沒有 API 金鑰；上次使用者自行執行的結果見 Phase B 補充，Phase F 沒有改變判決標籤的決定邏輯）。
+
+### 6. 沒做或沒驗證的事
+- `prep-samples`（40 份樣本的轉述句整理）：**未執行**，需要 API 金鑰。
+- `ensure_prepared`／`call_prep` 只用 `MockClient` 測過；真實模型是否能穩定回傳符合格式的 JSON、輸出上限 2,000 token 是否足夠，未驗證。
+- 並行與呼叫上限只用計數的 `MockClient` 與時間測試驗證，沒有對真實 API 壓測。

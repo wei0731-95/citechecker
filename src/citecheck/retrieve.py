@@ -68,11 +68,16 @@ def clean_query(claim: str, citation_raws: list[str]) -> str:
     return q
 
 
-def retrieve(query: str, passages: list[Passage], k: int = TOP_K) -> list[Passage]:
+def rank(query: str, passages: list[Passage]) -> list[Passage]:
+    """All passages of one judgment, best BM25 match first (ties keep document order)."""
     q = bigrams(query)
     if not q or not passages:
         return []
     bm25 = BM25Okapi([bigrams(p.text) or [""] for p in passages])
     scores = bm25.get_scores(q)
     order = sorted(range(len(passages)), key=lambda i: (-scores[i], i))
-    return [passages[i] for i in order[:k]]
+    return [passages[i] for i in order]
+
+
+def retrieve(query: str, passages: list[Passage], k: int = TOP_K) -> list[Passage]:
+    return rank(query, passages)[:k]

@@ -14,6 +14,9 @@ from .models import SegmentRole
 
 # ------------------------------------------------------------------ markers
 # Starting candidates from SPEC 7.1; revised against real data in docs/SEGMENT_RULES.md.
+# Bump by hand whenever the segmentation rules change (build-index rebuilds when it differs).
+SEGMENT_RULES_VERSION = 1
+
 PARTY_MARKERS = [
     "上訴人主張", "被上訴人主張", "本件上訴人主張", "被上訴人則以", "上訴人則以",
     "原告主張", "被告則以", "再抗告人主張", "抗告意旨", "上訴意旨", "上訴論旨",

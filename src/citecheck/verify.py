@@ -7,7 +7,7 @@ from .extract import Lexicon, out_of_scope
 from .ingest_laws import articles_in_note
 from .models import (JudgmentCitation, JudgmentStatus, StatuteCitation,
                      StatuteStatus)
-from .segment import segment
+from .index import main_text_of
 from .statute_check import check_structure
 
 ARTICLE_URL = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode={pcode}&flno={article}"
@@ -96,8 +96,7 @@ def verify_judgment(c: JudgmentCitation, con: sqlite3.Connection, lex: Lexicon) 
         jid, _, pdf_url, full_text, dismissal = rows[0]
         c.status = JudgmentStatus.FOUND
         c.jid, c.pdf_url, c.procedural_dismissal = jid, pdf_url, bool(dismissal)
-        main = "\n".join(s.text for s in segment(full_text) if s.part == "main")
-        c.main_text = main or None
+        c.main_text = main_text_of(con, jid)
         return c
     if many:                                                # 4 (also: doc_kind matched none of several)
         c.status = JudgmentStatus.AMBIGUOUS

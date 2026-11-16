@@ -1,6 +1,7 @@
 """LLM access (SPEC 7.4). Model and key come only from environment variables."""
 import hashlib
 import os
+import threading
 from pathlib import Path
 from typing import Protocol
 
@@ -12,7 +13,7 @@ class LLMConfigError(RuntimeError):
 
 
 class LLMClient(Protocol):
-    def complete(self, system: str, user: str) -> str: ...
+    def complete(self, system: str, user: str, max_tokens: int = 600) -> str: ...
 
 
 class AnthropicClient:
@@ -32,9 +33,9 @@ class AnthropicClient:
             raise LLMConfigError("未設定環境變數：" + "、".join(missing))
         return cls(model, key)
 
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str, max_tokens: int = 600) -> str:
         msg = self._client.messages.create(
-            model=self.model, max_tokens=600, temperature=0, system=system,
+            model=self.model, max_tokens=max_tokens, temperature=0, system=system,
             messages=[{"role": "user", "content": user}])
         return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
 
@@ -45,28 +46,45 @@ class MockClient:
     def __init__(self, responses: str | list[str]):
         self.responses = [responses] if isinstance(responses, str) else list(responses)
         self.calls: list[tuple[str, str]] = []
+        self.max_tokens: list[int] = []
+        self.cache_hits = 0
 
-    def complete(self, system: str, user: str) -> str:
+    @property
+    def api_calls(self) -> int:
+        return len(self.calls)
+
+    def complete(self, system: str, user: str, max_tokens: int = 600) -> str:
         self.calls.append((system, user))
+        self.max_tokens.append(max_tokens)
         i = min(len(self.calls) - 1, len(self.responses) - 1)
         return self.responses[i]
 
 
 class CachingClient:
-    """Disk cache keyed by SHA-256 of (model, system, user); a hit never calls the inner client."""
+    """Disk cache keyed by SHA-256 of (model, system, user); a hit never calls the inner client.
+
+    max_tokens is not part of the key. api_calls / cache_hits are thread-safe counters.
+    """
 
     def __init__(self, inner: LLMClient, model: str, cache_dir: Path = DEFAULT_CACHE_DIR):
         self.inner, self.model, self.dir = inner, model, Path(cache_dir)
+        self.api_calls = 0
+        self.cache_hits = 0
+        self._lock = threading.Lock()
 
     def _path(self, system: str, user: str) -> Path:
         h = hashlib.sha256("\x00".join((self.model, system, user)).encode("utf-8")).hexdigest()
         return self.dir / f"{h}.txt"
 
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str, max_tokens: int = 600) -> str:
         p = self._path(system, user)
         if p.exists():
+            with self._lock:
+                self.cache_hits += 1
             return p.read_text(encoding="utf-8")
-        out = self.inner.complete(system, user)
+        with self._lock:
+            self.api_calls += 1
+        out = self.inner.complete(system, user, max_tokens=max_tokens)
         self.dir.mkdir(parents=True, exist_ok=True)
         p.write_text(out, encoding="utf-8")
         return out
@@ -104,12 +122,12 @@ class OpenAIClient:
             raise LLMConfigError("未設定環境變數：" + "、".join(missing))
         return cls(model, key)
 
-    def _post(self, system: str, user: str) -> str:
+    def _post(self, system: str, user: str, max_tokens: int = 600) -> str:
         import json
         import urllib.error
         import urllib.request
 
-        body = {"model": self.model, "max_completion_tokens": 600,
+        body = {"model": self.model, "max_completion_tokens": max_tokens,
                 "messages": [{"role": "system", "content": system},
                              {"role": "user", "content": user}]}
         body.update(self._optional)
@@ -128,7 +146,7 @@ class OpenAIClient:
                   "被思考過程用完。", file=sys.stderr)
         return content
 
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str, max_tokens: int = 600) -> str:
         import sys
         import time
         import urllib.error
@@ -136,7 +154,7 @@ class OpenAIClient:
         last: Exception | None = None
         for attempt in range(3):  # first try + 2 retries
             try:
-                return self._post(system, user)
+                return self._post(system, user, max_tokens)
             except urllib.error.HTTPError as e:
                 detail = e.read().decode("utf-8", "replace")
                 rejected = [k for k in self._optional if k in detail]

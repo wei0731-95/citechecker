@@ -159,8 +159,13 @@ def eligible_for_l2(c: StatuteCitation) -> bool:
             and not c.not_in_force_note)
 
 
-def apply_statute_l2(statutes: list[StatuteCitation], client) -> None:
-    """B2. Everything not eligible keeps NOT_RUN."""
+def apply_statute_l2(statutes: list[StatuteCitation], client, stats=None) -> None:
+    """B2 (+ F3: at most MAX_PARALLEL_CALLS in flight, stop at the API-call cap).
+
+    Everything not eligible keeps NOT_RUN. Prompts are built and labels decided on the calling
+    thread; only the LLM call runs in a worker thread.
+    """
+    jobs: list[tuple[StatuteCitation, str]] = []
     for c in statutes:
         if client is None or not eligible_for_l2(c):
             c.l2_label, c.l2_confidence = StatuteL2Label.NOT_RUN, None
@@ -169,9 +174,16 @@ def apply_statute_l2(statutes: list[StatuteCitation], client) -> None:
         if len(text) > MAX_ARTICLE_CHARS:
             c.l2_label, c.l2_confidence = StatuteL2Label.UNCERTAIN, None
             continue
-        user = build_statute_prompt(c.claim_sentence or "", c.raw, article_label(c.law_name, c.article), text)
-        res = query_statute_llm(client, user)
-        if res is None:
+        jobs.append((c, build_statute_prompt(c.claim_sentence or "", c.raw,
+                                             article_label(c.law_name, c.article), text)))
+    from .judge import run_limited
+    results, skipped = run_limited(jobs, lambda job: query_statute_llm(client, job[1]), client)
+    for i, ((c, _), res) in enumerate(zip(jobs, results)):
+        if i in skipped:
+            c.l2_label, c.l2_confidence = StatuteL2Label.NOT_RUN, None
+            if stats is not None:
+                stats.skipped_by_cap += 1
+        elif res is None:
             c.l2_label, c.l2_confidence = StatuteL2Label.UNCERTAIN, None
         elif res.confidence >= CONFIDENCE_THRESHOLD:
             c.l2_label, c.l2_confidence = _LABEL[res.relation], res.confidence

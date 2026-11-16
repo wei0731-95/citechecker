@@ -18,6 +18,19 @@ def ingest_laws_cmd(path: Path):
 @app.command("ingest-judgments")
 def ingest_judgments_cmd(path: Path):
     typer.echo(_ij(path))
+    typer.echo("請接著執行 citecheck build-index")
+
+
+@app.command("build-index")
+def build_index_cmd(rebuild: bool = typer.Option(False, "--rebuild", help="清空 segments／passages 重做"),
+                    db: Path = typer.Option(DEFAULT_DB, "--db", help="資料庫路徑")):
+    from .index import build_index
+    from .segment import SEGMENT_RULES_VERSION
+
+    con = connect(db)
+    r = build_index(con, rebuild)
+    typer.echo(f"切段規則版本 {SEGMENT_RULES_VERSION}：本次新建索引 {r['indexed_now']} 份，"
+               f"先前已有 {r['already_indexed']} 份{'（已清空重做）' if r['rebuilt'] else ''}")
 
 
 @app.command()
@@ -75,13 +88,21 @@ def check(
         client = CachingClient(base, base.model)
     con = connect(db)
     lex = build_lexicon(con, Path("data/law_aliases.json"), Path("data/case_words_tps_civil.json"))
-    report = build_report(read_brief(brief), str(brief), con, lex, client)
+    from .index import IndexNotReady
+    try:
+        report = build_report(read_brief(brief), str(brief), con, lex, client)
+    except IndexNotReady as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(2)
     path = write_json(report, out)
     html_path = write_html(report, out)
     typer.echo(f"法條引用 {len(report.statutes)} 筆：{dict(Counter(s.status.value for s in report.statutes))}")
     typer.echo(f"判決引用 {len(report.judgments)} 筆：{dict(Counter(j.status.value for j in report.judgments))}")
     if client:
         typer.echo(f"L2：{dict(Counter(j.l2_label.value for j in report.judgments))}")
+    st = report.stats
+    typer.echo(f"API 呼叫 {st.api_calls} 次、快取命中 {st.cache_hits} 次、新整理裁判 {st.prep_new} 份、"
+               f"因上限略過 {st.skipped_by_cap} 筆、耗時 {st.seconds} 秒")
     for w in report.warnings:
         typer.echo(f"警告：{w}")
     typer.echo(f"已輸出：{path}、{html_path}")
@@ -108,7 +129,12 @@ def eval_cmd(
         client = CachingClient(base, base.model)
     con = connect(db)
     lex = build_lexicon(con, Path("data/law_aliases.json"), Path("data/case_words_tps_civil.json"))
-    metrics, errors = evaluate(load_testset(testset), con, lex, client)
+    from .index import IndexNotReady
+    try:
+        metrics, errors = evaluate(load_testset(testset), con, lex, client)
+    except IndexNotReady as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(2)
     write_results(metrics, errors, out)
     fmt = lambda m: "-" if m["rate"] is None else f"{m['rate']:.1%} ({m['num']}/{m['den']})"
     typer.echo(f"抽取召回率：{fmt(metrics['extraction_recall'])}")
@@ -128,6 +154,66 @@ def eval_cmd(
             typer.echo(f"法條不符偵測率：{fmt(metrics['statute_l2']['mismatch_detection_rate'])}")
             typer.echo(f"法條誤報率：{fmt(metrics['statute_l2']['false_alarm_rate'])}")
     typer.echo(f"錯誤 {len(errors)} 筆，已輸出至 {out}")
+
+
+@app.command("eval-retrieval")
+def eval_retrieval_cmd(testset: Path, db: Path = typer.Option(DEFAULT_DB, "--db", help="資料庫路徑")):
+    """金標段落落在 BM25 前 1／3／5／10 名的題數（不呼叫 API；TOP_K 不因結果而改）。"""
+    from .evaluate import eval_retrieval, load_testset
+    from .extract import build_lexicon
+    from .index import IndexNotReady
+
+    con = connect(db)
+    lex = build_lexicon(con, Path("data/law_aliases.json"), Path("data/case_words_tps_civil.json"))
+    try:
+        r = eval_retrieval(load_testset(testset), con, lex)
+    except IndexNotReady as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(2)
+    typer.echo(f"有金標段落的判決引用 {r['total']} 題（其中 {r['not_found']} 題的金標段落不在任何 passage 內或未抽取）")
+    typer.echo(f"金標段落落在前 1／3／5／10 名：{r['top1']}／{r['top3']}／{r['top5']}／{r['top10']} 題")
+
+
+@app.command("prep-samples")
+def prep_samples_cmd(db: Path = typer.Option(DEFAULT_DB, "--db", help="資料庫路徑")):
+    """對切段樣本的 40 份裁判做轉述句整理，輸出到 docs/quoted_samples/（需要 API 金鑰）。"""
+    import glob
+    import os
+
+    from .index import IndexNotReady, check_index_ready
+    from .llm import CachingClient, LLMConfigError, client_from_env
+    from .prep import ensure_prepared, load_quotes, split_sentences
+
+    try:
+        base = client_from_env()
+    except LLMConfigError as e:
+        typer.echo(f"{e}。prep-samples 需要 API，未執行。", err=True)
+        raise typer.Exit(2)
+    client = CachingClient(base, base.model)
+    jids = []
+    for d in ("docs/segment_samples", "docs/segment_samples_ruling"):
+        for p in sorted(glob.glob(d + "/TPSV_*.txt")):
+            jids.append(",".join(os.path.basename(p)[:-4].split("_")))
+    con = connect(db)
+    try:
+        check_index_ready(con, jids)
+    except IndexNotReady as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(2)
+    out_dir = Path("docs/quoted_samples")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for jid in jids:
+        ok = ensure_prepared(jid, con, client)
+        quotes = load_quotes(con, jid)
+        lines = [f"# {jid}（整理{'成功' if ok else '失敗'}）", ""]
+        for seq, text in con.execute(
+                "SELECT seq, text FROM passages WHERE jid=? AND role='SUPREME_COURT' ORDER BY seq", (jid,)):
+            for k, sent in enumerate(split_sentences(text)):
+                sp = quotes.get((seq, k))
+                lines.append((f">>{sp} " if sp else "") + sent)
+            lines.append("")
+        (out_dir / (jid.replace(",", "_") + ".txt")).write_text("\n".join(lines), encoding="utf-8")
+    typer.echo(f"已輸出 {len(jids)} 份到 {out_dir}")
 
 
 if __name__ == "__main__":

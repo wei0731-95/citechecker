@@ -23,6 +23,8 @@ def con():
     set_meta(c, "year_min", "110")
     set_meta(c, "year_max", "115")
     set_meta(c, "months_imported", '["202601", "202602"]')
+    from citecheck.index import build_index   # SPEC_V2 F1: judge reads the passages table
+    build_index(c)
     return c
 
 
