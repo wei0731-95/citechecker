@@ -324,6 +324,17 @@ def attach_claim_sentences(text: str, judgments: list[JudgmentCitation]) -> None
         j.claim_sentence = sentence[-_MAX_CLAIM:]
 
 
+def attach_statute_claims(text: str, statutes: list[StatuteCitation]) -> None:
+    """B2: the sentence holding the citation; if over 300 chars, 200 before to 100 after its end."""
+    sents = _sentences(text)
+    for c in statutes:
+        si = next(i for i, (s, e) in enumerate(sents) if s <= c.span.start <= max(s, e))
+        s, e = sents[si]
+        if e - s > 300:
+            s, e = max(s, c.span.end - 200), min(e, c.span.end + 100)
+        c.claim_sentence = text[s:e].strip()
+
+
 # ------------------------------------------------- A12: other authorities
 _N = "[0-9〇○零一二三四五六七八九十百千]+"
 _AUTHORITY_PATTERNS = [
@@ -378,6 +389,7 @@ def extract_full(text: str, lex: Lexicon) -> ExtractResult:
     judgments = _extract_judgments(text, lex, warnings)
     statutes = _extract_statutes(text, lex)
     attach_claim_sentences(text, judgments)
+    attach_statute_claims(text, statutes)
     others = _extract_other_authorities(text)
     return ExtractResult(statutes, judgments, warnings, others, _find_unrecognized(text, judgments, others))
 

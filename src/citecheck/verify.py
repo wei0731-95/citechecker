@@ -8,6 +8,7 @@ from .ingest_laws import articles_in_note
 from .models import (JudgmentCitation, JudgmentStatus, StatuteCitation,
                      StatuteStatus)
 from .segment import segment
+from .statute_check import check_structure
 
 ARTICLE_URL = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode={pcode}&flno={article}"
 _ARTICLE_KEY = re.compile(r"^\d+(-\d+)?$")
@@ -49,6 +50,8 @@ def verify_statute(c: StatuteCitation, con: sqlite3.Connection) -> StatuteCitati
     if c.article in articles_in_note(effective_note or ""):     # A10
         c.not_in_force_note = True
         c.structure_unchecked = True
+        return c
+    check_structure(c)                                          # B1
     return c
 
 

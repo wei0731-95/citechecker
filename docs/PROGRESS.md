@@ -176,3 +176,31 @@
 - 沒有跑 L2（沒有 API 金鑰）；`citecheck eval` 的 L2 與法條 L2 指標只用單元測試驗證。
 - 第二次標註的獨立性（見解讀 4）；判例、決議字號沒有對照官方來源。
 - 第二次標註只涵蓋 36 題（A–E、I）；其餘題目金標由資料庫或字號事實決定。
+
+## SPEC_V2 Phase B
+
+### 1. 完成了什麼（對應 SPEC_V2 §6）
+- B1：`check_structure` 接進 `verify_statute`（只在 `FOUND`、法規為「民法」、不是尚未施行條文時做）：項數超出 → `PARAGRAPH_NOT_FOUND`；款不在該項的款號清單 → `SUBPARAGRAPH_NOT_FOUND`（沒寫項且只有 1 項時看第 1 項；沒寫項且有多項時不檢查，`structure_unchecked=True`）；無法解析或不是民法 → `structure_unchecked=True`。兩種「不存在」狀態仍附 `article_text`。
+- B2：`attach_statute_claims`（`extract.py`）、`STATUTE_SYSTEM_PROMPT`／`STATUTE_USER_TEMPLATE`（逐字）、`STATUTE_PROMPT_VERSION = 1`、`article_label`、`apply_statute_l2`（已接進 `build_report`）：只對「FOUND＋民法＋非尚未施行」的引用呼叫；條文超過 3,000 字不呼叫、標 `UNCERTAIN`；一筆一次呼叫；解析失敗重試 1 次（失敗回應記入 `data/llm_failures.log`），兩次失敗標 `UNCERTAIN`；`confidence >= 0.6` 才採信，否則 `UNCERTAIN`；`l2_confidence` 存 LLM 回的值。
+- 報告顏色：法條 `FOUND` 且 `MISMATCH` 暫時用橘色（完整的四等級顯示留給 Phase D）。
+
+### 2. 我做的解讀
+1. `statute_check.py` 從 `judge.py` 匯入 `CONFIDENCE_THRESHOLD` 與 `_log_failure`（重用既有的失敗記錄）。
+2. 法條 L2 的快取、重試與記錄沿用 `CachingClient`／`query_llm` 的作法；快取鍵含完整提示詞，所以提示詞版本改變時不會誤用舊結果。
+3. `apply_statute_l2` 在 `client=None` 時把所有引用設為 `NOT_RUN`（包含不符合資格者）。
+4. 主張句超過 300 字時，在該句內取「引用結尾往前 200 字到往後 100 字」，不超出句界。
+
+### 3. 被調整預期值的既有測試
+無。
+
+### 4. pytest
+174 項通過（Phase T 結束時 149 項）。
+
+### 5. 評測數字（AI 標註，未經人工複核；沒有 API 金鑰，全部 `--no-l2`）
+- `eval/testset.jsonl`（v1）：Phase B 之前 → 之後：抽取 42/42 → 42/42；L1 39/42 → 39/42（沒有變化；F01–F03 仍因 115 年度未涵蓋而為「資料未涵蓋」）。
+- `eval/testset_v2.jsonl`：抽取 91/91 → 91/91；L1 75/84 → **84/84**（Phase T 的 9 個錯誤 S6、S7 全部修正）。沒有變差的指標。
+- 法條 L2 指標（不符偵測率、誤報率、混淆矩陣）：**未執行**（沒有 `CITECHECK_MODEL` 與 API 金鑰）。
+
+### 6. 沒做或沒驗證的事
+- 沒有用真實 API 跑過法條 L2；提示詞只用 `MockClient` 測過格式與流程。
+- 法條 L2 對 v2 的 S1／S2／S3（共 21 題）的實際表現未知，需要金鑰後執行 `eval eval/testset_v2.jsonl`。

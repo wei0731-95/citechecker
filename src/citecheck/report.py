@@ -6,6 +6,7 @@ from pathlib import Path
 from .extract import Lexicon, extract_full
 from .models import DataCoverage, JudgmentCitation, L2Label, Report, Span
 from .normalize import normalize_with_map
+from .statute_check import apply_statute_l2
 from .verify import ARTICLE_URL, covered_years, imported_months, verify_judgment, verify_statute  # noqa: F401
 
 
@@ -58,6 +59,7 @@ def build_report(raw_text: str, input_file: str, con: sqlite3.Connection, lex: L
     else:
         from .judge import apply_l2
         apply_l2(judgments, con, client)
+    apply_statute_l2(statutes, client)
     return Report(input_file=input_file, generated_at=datetime.now().astimezone().isoformat(),
                   data_coverage=data_coverage(con), normalized_text=text,
                   statutes=statutes, judgments=judgments, warnings=warnings, original_text=raw_text,
@@ -123,6 +125,8 @@ def color_of(c) -> str:
     """green / red / orange / gray per SPEC 8."""
     status = c.status.value
     if c.type == "STATUTE":
+        if status == "FOUND" and c.l2_label.value == "MISMATCH":
+            return "orange"
         return "green" if status == "FOUND" else "red" if status in _RED else \
             "orange" if status in _ORANGE else "gray"
     l2 = c.l2_label.value
