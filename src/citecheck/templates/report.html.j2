@@ -92,7 +92,7 @@ footer p{margin:.35em 0}
 {% endif %}
 
 <h2>書狀原文</h2>
-<p class="legend"><span class="badge green">查得到</span><span class="badge red">請確認</span><span class="badge orange">請留意</span><span class="badge gray">無法查核</span>（顏色之外，每個引用後面都有文字標籤；點選引用可跳到說明）</p>
+<p class="legend"><span class="badge green">查得到</span><span class="badge red">請確認</span><span class="badge orange">請留意</span><span class="badge gray">無法查核</span><span class="badge gray">僅確認字號</span>（顏色之外，每個引用後面都有文字標籤；點選引用可跳到說明）</p>
 <div class="brief">{% for p in pieces %}{% if p.color %}<a class="hl {{ p.color }}" id="t{{ p.n }}" href="#c{{ p.n }}">{{ p.text }}</a><span class="tag">{{ p.label }}</span>{% else %}{{ p.text }}{% endif %}{% endfor %}</div>
 
 <h2>逐筆明細</h2>

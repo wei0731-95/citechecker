@@ -218,3 +218,13 @@ def test_continuation_shows_which_article_it_belongs_to():
     html = render_html(r)
     assert html.count("（民法第195條之1）") == 2           # overview row + detail card
     assert "（民法第1條）" not in html                      # ordinary citations are unchanged
+
+
+def test_found_judgment_without_l2_is_labelled_id_only_but_counted_as_unknown():
+    from citecheck.models import Report
+    from citecheck.report import ID_ONLY_LABEL, render_html
+
+    j = jd(JudgmentStatus.FOUND)
+    html = render_html(Report(input_file="x", generated_at="t", data_coverage=DataCoverage(), normalized_text="",
+                              original_text="", statutes=[], judgments=[j]))
+    assert ID_ONLY_LABEL == "僅確認字號" and f">{ID_ONLY_LABEL}<" in html

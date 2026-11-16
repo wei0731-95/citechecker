@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .db import SCHEMA_VERSION
 from .extract import Lexicon, extract_full
-from .models import DataCoverage, JudgmentCitation, L2Label, OtherAuthority, Report, RunStats, Span
+from .models import DataCoverage, JudgmentCitation, JudgmentStatus, L2Label, OtherAuthority, Report, RunStats, Span
 from .normalize import normalize_with_map
 from .judge import api_calls_of
 from .prep import PREP_PROMPT_VERSION
@@ -102,6 +102,7 @@ ARTICLE_LINK_TEXT = "在全國法規資料庫看這一條"
 PDF_LINK_TEXT = "看裁判原文（司法院 PDF）"
 
 # Level (shown as colour AND as a text label): ok green / check red / notice orange / unknown grey.
+ID_ONLY_LABEL = "僅確認字號"      # FOUND judgment whose content was not compared (grey, counted as 無法查核)
 LEVEL_LABEL = {"ok": "查得到", "check": "請確認", "notice": "請留意", "unknown": "無法查核"}
 LEVEL_COLOR = {"ok": "green", "check": "red", "notice": "orange", "unknown": "gray"}
 # One-line meaning of each level, shown next to the counts and on the form page (UI aid, SPEC_V3 Phase H).
@@ -245,7 +246,10 @@ def render_html(report: Report, today: date | None = None, back_link: bool = Fal
     for n, c in enumerate(items, 1):
         level, explanation, notes = describe(c)
         counts[level] += 1
-        row = {"n": n, "level": level, "color": LEVEL_COLOR[level], "label": LEVEL_LABEL[level],
+        label = LEVEL_LABEL[level]
+        if getattr(c, "type", "") == "JUDGMENT" and c.status == JudgmentStatus.FOUND and c.l2_label == L2Label.NOT_RUN:
+            label = ID_ONLY_LABEL                              # found, but its content was not compared
+        row = {"n": n, "level": level, "color": LEVEL_COLOR[level], "label": label,
                "explanation": explanation, "notes": notes, "kind": getattr(c, "type", "OTHER"),
                "raw": text[sp(c).start:sp(c).end] if use_orig else c.raw}
         if row["kind"] == "STATUTE":
@@ -266,7 +270,7 @@ def render_html(report: Report, today: date | None = None, back_link: bool = Fal
         start, end = max(sp(c).start, pos), sp(c).end    # an overlapping span starts where the previous ended
         if end > start:
             pieces.append({"text": text[pos:start], "color": None, "n": n})
-            pieces.append({"text": text[start:end], "color": LEVEL_COLOR[level], "label": LEVEL_LABEL[level], "n": n})
+            pieces.append({"text": text[start:end], "color": LEVEL_COLOR[level], "label": label, "n": n})
             pos = end
     pieces.append({"text": text[pos:], "color": None, "n": 0})
 
