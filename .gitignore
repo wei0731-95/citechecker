@@ -7,3 +7,9 @@ __pycache__/
 data/*.db
 data/llm_failures.log
 out/
+
+# competition documents (not published)
+docs/企劃書.docx
+docs/參賽動機說明.docx
+docs/pitch/
+docs/~$*

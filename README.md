@@ -1,8 +1,42 @@
-# citecheck — 書狀引用查核器
+<p align="center">
+  <img src="docs/images/banner.png" alt="CiteCheck 書狀引用查核器" width="100%">
+</p>
+
+<p align="center">
+  <img alt="Python 3.11" src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white">
+  <img alt="Docker" src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white">
+  <img alt="SQLite FTS5" src="https://img.shields.io/badge/SQLite-FTS5-003B57?logo=sqlite&logoColor=white">
+  <img alt="LLM provider" src="https://img.shields.io/badge/LLM-OpenAI%20%7C%20Anthropic%20%7C%20Ollama-6E56CF">
+  <img alt="Tests 333 passing" src="https://img.shields.io/badge/tests-333%20passing-2EA043">
+  <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-blue">
+  <img alt="Not legal advice" src="https://img.shields.io/badge/not%20legal%20advice-%E2%9A%A0-lightgrey">
+</p>
+
+# CiteCheck — 書狀引用查核器
 
 檢查書狀中引用的**法條**與**最高法院民事裁判**：在資料庫裡查不查得到，以及（選用）書狀的說法是不是最高法院自己的見解。
 
 > **本工具僅提供引用查核輔助，不構成法律意見，也不能取代律師。** 標示為綠色的引用仍請自行點連結核對原文。
+
+**目錄**：[它能幫你抓到什麼](#它能幫你抓到什麼) · [報告畫面](#報告畫面) · [快速開始](#快速開始) · [範本](#範本) · [架構](#架構) · [防誤判設計](#為什麼可以相信它的判斷防誤判設計) · [擴充與自訂](#擴充與自訂) · [開發](#開發)
+
+---
+
+## 報告畫面
+
+查核報告把書狀原文中的每個引用依結果標上不同顏色，**顏色之外一律附文字標籤**（不只靠顏色辨識），並附原文連結與依據段落供自行核對。
+
+**只查存在性（不需 AI）**：綠＝查得到、紅＝請確認、橘＝請留意、灰＝無法查核或僅確認字號。
+
+![只查存在性的報告：原文依結果標色](docs/images/report-existence-check.png)
+
+**含 AI 比對**：條文與書狀敘述對不上、判決段落其實是原審見解的標為橘色；與判決論述相反的標為紅色。
+
+![含 AI 比對的報告：引用依比對結果標色](docs/images/report-ai-comparison.png)
+
+**逐筆明細**：附裁判主文、書狀主張句，以及判決中最相關的原文段落（含段落角色與關係）。
+
+![逐筆明細：與判決論述相反的引用](docs/images/report-detail.png)
 
 ---
 
