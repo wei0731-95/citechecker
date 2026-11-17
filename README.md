@@ -96,7 +96,7 @@ PowerShell（Windows）：
 
 ```powershell
 $env:CITECHECK_PROVIDER = "openai"      # 或 anthropic（預設）
-$env:CITECHECK_MODEL = "模型名稱"
+$env:CITECHECK_MODEL = "gpt-6-luna"     # 範例模型；要換成別的模型就改這裡
 $env:OPENAI_API_KEY = "你的金鑰"         # 用 anthropic 則改設 ANTHROPIC_API_KEY
 ```
 
@@ -104,9 +104,11 @@ macOS／Linux（bash）：
 
 ```bash
 export CITECHECK_PROVIDER=openai
-export CITECHECK_MODEL=模型名稱
+export CITECHECK_MODEL=gpt-6-luna
 export OPENAI_API_KEY=你的金鑰
 ```
+
+> `CITECHECK_MODEL` 要填 API 的**模型代號**（小寫、不含空格，例如 `gpt-6-luna`），不是產品的顯示名稱。填錯時會出現 404 或「模型不存在」之類的錯誤。
 
 **步驟 2：啟動網頁**（`-e` 是 `docker run` 的選項，必須放在映像檔名 `citecheck` **之前**）
 
