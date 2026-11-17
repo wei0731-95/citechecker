@@ -86,13 +86,49 @@ docker run --rm -p 127.0.0.1:8000:8000 -v "${PWD}:/app" -w /app citecheck citech
 
 用瀏覽器開 http://127.0.0.1:8000/ ，貼上書狀文字，按「開始查核」。`samples/` 裡有範本可以試。
 
-要比對內容（AI），先設定環境變數再啟動，並在啟動指令加上 `-e CITECHECK_PROVIDER -e CITECHECK_MODEL -e OPENAI_API_KEY`：
+### 啟用 AI 內容比對
+
+分兩步：**先在同一個終端機視窗設定環境變數，再啟動並用 `-e` 把它們帶進 Docker。**
+
+**步驟 1：設定環境變數**
+
+PowerShell（Windows）：
 
 ```powershell
 $env:CITECHECK_PROVIDER = "openai"      # 或 anthropic（預設）
 $env:CITECHECK_MODEL = "模型名稱"
-$env:OPENAI_API_KEY = "你的金鑰"         # anthropic 則設 ANTHROPIC_API_KEY
+$env:OPENAI_API_KEY = "你的金鑰"         # 用 anthropic 則改設 ANTHROPIC_API_KEY
 ```
+
+macOS／Linux（bash）：
+
+```bash
+export CITECHECK_PROVIDER=openai
+export CITECHECK_MODEL=模型名稱
+export OPENAI_API_KEY=你的金鑰
+```
+
+**步驟 2：啟動網頁**（`-e` 是 `docker run` 的選項，必須放在映像檔名 `citecheck` **之前**）
+
+PowerShell：
+
+```powershell
+docker run --rm -p 127.0.0.1:8000:8000 -v "${PWD}:/app" -w /app `
+  -e CITECHECK_PROVIDER -e CITECHECK_MODEL -e OPENAI_API_KEY `
+  citecheck citecheck serve --host 0.0.0.0 --port 8000
+```
+
+bash：
+
+```bash
+docker run --rm -p 127.0.0.1:8000:8000 -v "$PWD:/app" -w /app \
+  -e CITECHECK_PROVIDER -e CITECHECK_MODEL -e OPENAI_API_KEY \
+  citecheck citecheck serve --host 0.0.0.0 --port 8000
+```
+
+開啟 http://127.0.0.1:8000/ ，勾選「同時比對內容是否相符」再按「開始查核」。用 Anthropic 時，把 `-e OPENAI_API_KEY` 換成 `-e ANTHROPIC_API_KEY`，並省略（或設為 `anthropic` 的）`CITECHECK_PROVIDER`。
+
+> 常見錯誤：把 `-e ...` 放在 `citecheck serve` 後面，會出現 `No such option: -e`。
 
 > 勾選「同時比對內容是否相符」時，**含有引用的句子**會傳送到外部 AI 服務。請先刪除姓名、身分證字號、地址等個人資料。不勾選時完全不對外連線。
 
@@ -266,9 +302,16 @@ citecheck eval-suggest eval/my_tests.jsonl                      # 相近裁判�
 
 ## 命令列
 
-```bash
-citecheck check 書狀.txt --out out/r1 --no-l2   # 只查是否存在
-citecheck check 書狀.txt --out out/r1           # 含內容比對
+在 Docker 內執行（PowerShell；bash 把 `${PWD}` 換成 `$PWD`、行尾的 `` ` `` 換成 `\`）：
+
+```powershell
+# 只查是否存在（不需 AI、不需環境變數）
+docker run --rm -v "${PWD}:/app" -w /app citecheck citecheck check 書狀.txt --out out/r1 --no-l2
+
+# 含內容比對（需先設好環境變數，見上方「啟用 AI 內容比對」）
+docker run --rm -v "${PWD}:/app" -w /app `
+  -e CITECHECK_PROVIDER -e CITECHECK_MODEL -e OPENAI_API_KEY `
+  citecheck citecheck check 書狀.txt --out out/r1
 ```
 
 支援 `.txt`（UTF-8）與 `.docx`。輸出 `report.html` 與 `report.json`。
